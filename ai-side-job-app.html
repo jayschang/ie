@@ -1,0 +1,402 @@
+<title>副業連結 App</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* Mobile app shell: one codebase, two native dialects (iOS / Android) switched by data-p. Connect motif: hub, nodes, flowing links. */
+:root{
+  --outer:#DDE5EC; --bg:#F2F5F8; --surface:#FFFFFF; --surface2:#E7EDF2; --ink:#0F2230; --muted:#566B7B; --line:#D6E0E8;
+  --accent:#08877C; --accent-soft:#D7F0ED; --accent2:#1A66CC; --warm:#A45C00; --accent-ink:#FFFFFF;
+  --num:"Space Grotesk","Noto Sans TC",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --outer:#02070B; --bg:#07111A; --surface:#0E1B27; --surface2:#16293A; --ink:#E8F1F7; --muted:#8FA5B6; --line:#223A4E;
+    --accent:#2BD4C0; --accent-soft:#12383A; --accent2:#4AA3FF; --warm:#FFB347; --accent-ink:#04211E; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --outer:#02070B; --bg:#07111A; --surface:#0E1B27; --surface2:#16293A; --ink:#E8F1F7; --muted:#8FA5B6; --line:#223A4E;
+  --accent:#2BD4C0; --accent-soft:#12383A; --accent2:#4AA3FF; --warm:#FFB347; --accent-ink:#04211E; color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;background:var(--outer);color:var(--ink);display:flex;justify-content:center}
+@media (min-width:520px){body{padding-block:16px}}
+h1,h2,h3,p{margin:0}
+button{font:inherit;color:inherit}
+.num{font-family:var(--num);font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+#app{--font:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang TC","Noto Sans TC",system-ui,sans-serif;
+  --rc:14px;--rb:12px;
+  width:100%;max-width:430px;height:100%;display:flex;flex-direction:column;background:var(--bg);position:relative;overflow:hidden;font:15px/1.55 var(--font)}
+@media (min-width:520px){#app{border-radius:34px;border:1px solid var(--line);box-shadow:0 24px 60px rgba(0,0,0,.28)}}
+.pad{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* app bar */
+.appbar{padding-top:10px;padding-bottom:6px;display:flex;align-items:flex-end;gap:10px}
+.appbar h1{flex:1;min-width:0;font-size:32px;line-height:1.15;font-weight:700;letter-spacing:.01em}
+.appbar .sub{font-size:12px;color:var(--muted)}
+#app[data-p="android"]{--font:Roboto,"Noto Sans TC","Google Sans",system-ui,sans-serif;--rc:22px;--rb:999px}
+#app[data-p="android"] .appbar{padding-top:14px;padding-bottom:10px;align-items:center}
+#app[data-p="android"] .appbar h1{font-size:22px;font-weight:500}
+
+main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding-top:6px;padding-bottom:20px;display:grid;gap:14px;align-content:start}
+
+/* tab bar */
+.tabs{display:flex;border-top:1px solid var(--line);background:var(--surface);padding-top:6px}
+.tabs button{flex:1;background:none;border:0;cursor:pointer;display:grid;justify-items:center;gap:2px;padding:4px 0 6px;font-size:10px;color:var(--muted)}
+.tabs svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tabs button[aria-selected="true"]{color:var(--accent)}
+#app[data-p="ios"] .tabs{background:color-mix(in srgb,var(--surface) 82%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+#app[data-p="android"] .tabs{background:var(--surface2);border-top:0;padding-top:10px}
+#app[data-p="android"] .tabs button{font-size:12px;gap:4px}
+#app[data-p="android"] .tabs button .ic{width:56px;height:30px;border-radius:999px;display:grid;place-items:center;transition:background .25s}
+#app[data-p="android"] .tabs button[aria-selected="true"] .ic{background:var(--accent-soft)}
+#app[data-p="android"] .tabs button[aria-selected="true"]{color:var(--ink);font-weight:700}
+#app[data-p="android"] .tabs button[aria-selected="true"] svg{stroke:var(--accent)}
+#app[data-p="ios"] .tabs .ic{display:grid;place-items:center}
+
+/* surfaces */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--rc);padding:14px;min-width:0}
+#app[data-p="android"] .card{border:0;background:var(--surface)}
+#app[data-p="android"] .card.tonal{background:var(--surface2)}
+.label{font-size:12px;color:var(--muted);letter-spacing:.08em;padding:0 4px 6px}
+.btn{border:0;cursor:pointer;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:16px;padding:13px 20px;border-radius:var(--rb);width:100%}
+.btn.ghost{background:var(--surface2);color:var(--ink);font-weight:500}
+.btn[disabled]{opacity:.4;cursor:default}
+.fab{display:none}
+#app[data-p="android"] .fab{display:inline-flex;position:absolute;right:16px;bottom:96px;z-index:5;align-items:center;gap:8px;border:0;cursor:pointer;
+  background:var(--accent-soft);color:var(--accent);font-weight:700;border-radius:18px;padding:14px 20px;box-shadow:0 6px 16px rgba(0,0,0,.25)}
+
+/* hero */
+.hero{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:center}
+.gauge{position:relative;width:118px}
+.gauge svg{display:block;width:100%}
+.gauge .in{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.gauge b{font-family:var(--num);font-size:34px;line-height:1}
+.gauge small{font-size:10px;color:var(--muted)}
+.trk{fill:none;stroke:var(--line)}
+.prog{fill:none;stroke-linecap:round;transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset .9s cubic-bezier(.2,.8,.2,1)}
+.rk{font-size:12px;font-weight:700;color:var(--warm);letter-spacing:.06em}
+.jn{font-size:20px;font-weight:900;line-height:1.25;text-wrap:balance}
+.meta{font-size:13px;color:var(--muted)}
+.chipP{display:inline-flex;gap:6px;align-items:center;font-size:12px;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:3px 10px;width:max-content;max-width:100%}
+.facts{display:grid;gap:8px;margin-top:12px;font-size:14px}
+.facts em{font-style:normal;color:var(--muted);font-size:12px;display:block;line-height:1.3}
+
+/* network */
+svg.net{display:block;width:100%;height:auto}
+.link{stroke:var(--accent);stroke-linecap:round;stroke-dasharray:4 12;animation:flow 2s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-32}}
+.node{cursor:pointer}
+.node .dot{fill:var(--surface2);stroke:var(--accent2);stroke-width:2}
+.node.top .dot{fill:var(--accent);stroke:var(--accent)}
+.node.sel .dot{stroke:var(--warm);stroke-width:4}
+.node .halo{fill:var(--accent);opacity:0;transform-box:fill-box;transform-origin:center}
+.node.top .halo{opacity:.25;animation:halo 2.2s ease-in-out infinite}
+@keyframes halo{50%{transform:scale(1.5);opacity:.05}}
+.node text{font-family:var(--num);font-weight:700;font-size:13px;fill:var(--ink);text-anchor:middle;pointer-events:none}
+.node.top text.sc{fill:var(--accent-ink)}
+.node text.nm{font-family:var(--font);font-weight:500;font-size:14px;fill:var(--muted)}
+.node.sel text.nm,.node.top text.nm{fill:var(--ink)}
+.hub{fill:var(--surface2);stroke:var(--accent);stroke-width:2}
+.pulse{fill:none;stroke:var(--accent);stroke-width:1.5;transform-box:fill-box;transform-origin:center;animation:pulse 3s ease-out infinite}
+@keyframes pulse{from{transform:scale(1);opacity:.7}to{transform:scale(3);opacity:0}}
+
+/* lists */
+.list{background:var(--surface);border-radius:var(--rc);overflow:hidden;border:1px solid var(--line)}
+#app[data-p="android"] .list{border:0}
+.item{display:grid;grid-template-columns:22px minmax(0,1fr) 36px;gap:2px 10px;align-items:center;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:11px 14px;cursor:pointer}
+.item:last-child{border-bottom:0}
+.item[aria-current="true"]{background:var(--accent-soft)}
+.item .n{font-family:var(--num);color:var(--muted);font-weight:700;font-size:13px}
+.item .nm{font-size:14px;line-height:1.3}
+.item .v{font-family:var(--num);font-weight:700;text-align:right}
+.track{grid-column:2 / 4;height:6px;background:var(--surface2);border-radius:99px;overflow:hidden}
+.fill{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent2),var(--accent));transform-origin:left;animation:grow .9s cubic-bezier(.2,.8,.2,1) both}
+@keyframes grow{from{transform:scaleX(0)}}
+a.item{text-decoration:none;color:inherit;grid-template-columns:minmax(0,1fr) auto}
+a.item small{color:var(--muted);font-size:12px;display:block}
+a.item span.go{color:var(--accent);font-size:13px}
+
+/* wizard */
+.seg{display:flex;gap:3px}
+.seg i{flex:1;height:4px;border-radius:2px;background:var(--line)}
+.seg i.on{background:var(--accent)}
+.q{display:grid;gap:14px;text-align:center;padding:18px 6px 6px}
+.q small{color:var(--muted);font-size:13px}
+.q h2{font-size:22px;font-weight:700;line-height:1.35;text-wrap:balance}
+.bigv{font-family:var(--num);font-size:84px;line-height:1;font-weight:700;color:var(--accent)}
+input[type=range]{width:100%;height:36px;accent-color:var(--accent);margin:0}
+.ends{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--muted);text-align:left}
+.ends span:last-child{text-align:right}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font-size:14px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+.nav{display:grid;grid-template-columns:1fr 2fr;gap:10px}
+.live{font-size:12px;color:var(--muted);text-align:center}
+.live b{color:var(--accent)}
+
+/* flash cards */
+.car{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px max(16px,env(safe-area-inset-left,0px)) 10px;scrollbar-width:none}
+.car::-webkit-scrollbar{display:none}
+.fc{flex:0 0 84%;scroll-snap-align:center;perspective:900px;background:none;border:0;padding:0;text-align:left;cursor:pointer}
+.in2{display:grid;height:100%;transform-style:preserve-3d;transition:transform .5s}
+.fc[aria-pressed="true"] .in2{transform:rotateY(180deg)}
+.face{grid-area:1/1;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--surface);border:1px solid var(--line);border-radius:calc(var(--rc) + 4px);padding:18px;display:grid;gap:8px;align-content:start;min-height:370px}
+#app[data-p="android"] .face{border:0}
+.face.back{transform:rotateY(180deg);font-size:14px}
+.face .score{font-family:var(--num);font-size:64px;font-weight:700;line-height:1;color:var(--accent)}
+.face h3{font-size:20px;font-weight:900;line-height:1.25}
+.face .hint{font-size:12px;color:var(--muted)}
+.face dl{margin:0;display:grid;gap:10px}
+.face dt{font-size:12px;color:var(--muted)}
+.face dd{margin:0}
+.count{text-align:center;font-size:12px;color:var(--muted)}
+
+/* actions */
+.ringrow{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:center}
+.ck{display:grid;grid-template-columns:24px minmax(0,1fr);gap:10px;align-items:start;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:12px 14px;cursor:pointer}
+.ck:last-child{border-bottom:0}
+.ck .b{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;margin-top:1px;transition:.2s}
+.ck[aria-checked="true"] .b{background:var(--accent);border-color:var(--accent)}
+.ck[aria-checked="true"] .b::after{content:"";width:6px;height:10px;border:solid var(--accent-ink);border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.ck[aria-checked="true"] .t{color:var(--muted);text-decoration:line-through}
+.ck small{display:block;color:var(--accent);font-size:11px;font-weight:700}
+.sw{display:grid;grid-template-columns:repeat(3,1fr);background:var(--surface2);border-radius:var(--rb);padding:3px;gap:3px}
+.sw button{border:0;background:none;border-radius:calc(var(--rb) - 3px);padding:8px 4px;cursor:pointer;font-size:14px}
+.sw button[aria-pressed="true"]{background:var(--surface);font-weight:700;color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11px;color:var(--muted);font-weight:500}
+tr:last-child td{border-bottom:0}
+ul.p{margin:0;padding-left:18px;display:grid;gap:6px;font-size:14px}
+a{color:var(--accent)}
+.note{font-size:12px;color:var(--muted)}
+.view{animation:rise .35s both;display:grid;gap:14px}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}}
+@media (prefers-reduced-motion:reduce){.link,.pulse,.node.top .halo,.fill,.view,.prog,.in2{animation:none!important;transition:none!important}}
+</style>
+
+<div id="app" data-p="ios">
+  <header class="appbar pad"><h1 id="ttl"></h1><span class="sub" id="sub"></span></header>
+  <main class="pad" id="view"></main>
+  <button class="fab" id="fab" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>調整評估</button>
+  <nav class="tabs pad" role="tablist" aria-label="主選單" id="tabs"></nav>
+</div>
+
+<script>
+const ABIL=[
+ {k:'domain',n:'產業專業',h:'網通、電子產業知識'},{k:'enW',n:'英文文件',h:'信件、提案、規格書'},
+ {k:'zhW',n:'中文文件',h:'報告、手冊、計畫書'},{k:'comm',n:'對外溝通',h:'客戶、供應商、原廠'},
+ {k:'proc',n:'流程整理',h:'把事情拆成步驟'},{k:'data',n:'數據分析',h:'報表、比較、判讀'},
+ {k:'mkt',n:'行銷廣告',h:'展覽、活動、投放'},{k:'ai',n:'AI 工具運用',h:'提示詞、自動化'}
+];
+const TRAITS=[
+ {k:'social',n:'你喜歡和人互動嗎？',lo:'偏好獨自作業',hi:'喜歡與人互動'},
+ {k:'stable',n:'你偏好穩定收入嗎？',lo:'願意衝高、承擔波動',hi:'偏好穩定收入'},
+ {k:'repeat',n:'你能耐住重複細節嗎？',lo:'討厭重複',hi:'耐得住細節'},
+ {k:'free',n:'願意先免費試做嗎？',lo:'不想免費試做',hi:'願意先做作品'},
+ {k:'real',n:'上班時間能即時回覆嗎？',lo:'難回覆',hi:'可隨時回覆'}
+];
+const TOOLS=[
+ {k:'ai',n:'ChatGPT / Claude 等 AI',j:[1,2,3,5,6,7,9]},{k:'xls',n:'Excel / 試算表',j:[3,4,8,9]},
+ {k:'ppt',n:'Word / PowerPoint',j:[5,6,7]},{k:'design',n:'Canva / Figma',j:[3,5,9]},
+ {k:'notion',n:'Notion 文件工具',j:[2,5,6]},{k:'ads',n:'廣告後台',j:[9]},
+ {k:'crm',n:'CRM / 自動化',j:[2,4]},{k:'shop',n:'電商後台',j:[3,8]},{k:'trans',n:'翻譯校對',j:[1,7,8]}
+];
+const EXPS=[
+ {k:'rfq',n:'寫過 RFQ / 提案',j:[6,7]},{k:'vendor',n:'管理 design house / 供應商',j:[2,8]},
+ {k:'expo',n:'展覽與活動協調',j:[4,9]},{k:'visit',n:'客戶拜訪與訪談',j:[2,4,8]},
+ {k:'bench',n:'競品分析',j:[1,3,9]},{k:'train',n:'內部培訓、教材',j:[1,5,6]},
+ {k:'report',n:'市調報告整理',j:[1,6,7]},{k:'csat',n:'售後與滿意度',j:[2,4]},{k:'chip',n:'國外芯片廠交流',j:[1,7,8]}
+];
+const JOBS=[
+ {id:1,s:'AI 訓練師',name:'中文 AI 訓練師',market:8.5,w:{zhW:3,ai:3,domain:2,proc:1,data:1},t:[2,7,7,4,2],what:'評估與改寫 AI 的中文回答',meta:'AI 的中文品質把關人',pay:'截圖未列出，請對照影片補上',start:'挑 3 則中文 AI 回答，做評分與改寫當樣本',inferred:true,kw:'AI trainer'},
+ {id:2,s:'AI 線上助理',name:'會用 AI 的線上助理',market:8,w:{comm:2,ai:3,proc:2,zhW:1,enW:1},t:[8,5,5,6,7],what:'幫忙碌的老闆處理雜事',meta:'不用進辦公室的秘書',pay:'時薪 $10–50+',start:'選一種老闆，提出 3 件你能幫他做的事',kw:'virtual assistant'},
+ {id:3,s:'商品目錄',name:'電商商品目錄專員',market:7.5,w:{zhW:2,data:2,proc:2,ai:2,mkt:1},t:[1,9,9,3,1],what:'商品上架、寫描述、分類',meta:'1 萬個商品的圖書館員',pay:'年薪 $45K–89K',start:'重寫 20 個商品當作品',kw:'product listing'},
+ {id:4,s:'快速回覆',name:'快速回覆名單專員',market:8,w:{comm:3,proc:2,ai:1,zhW:1},t:[9,4,4,2,10],what:'幾分鐘內聯絡新客人、約時間',meta:'把老闆的行事曆排滿',pay:'時薪 $8–45 + 佣金',start:'按約到的客人收費',kw:'appointment setter'},
+ {id:5,s:'SOP',name:'SOP 撰寫員',market:8.5,w:{proc:3,zhW:3,domain:2,ai:2},t:[3,7,6,7,2],what:'寫一步一步的作業手冊',meta:'幫公司寫食譜書',pay:'中位數 $91,670 / 年',start:'免費寫 3 份 SOP',kw:'SOP writer'},
+ {id:6,s:'補助申請',name:'補助申請撰寫員',market:8,w:{zhW:3,proc:2,domain:2,data:1,ai:2},t:[3,6,5,6,2],what:'幫企業申請補助金',meta:'幫人找到免費的錢',pay:'年薪約 $66K',start:'幫小企業申請一個補助',kw:'grant writer'},
+ {id:7,s:'標案',name:'標案撰寫員',market:8.5,w:{domain:3,zhW:2,enW:2,proc:2,ai:2,comm:1},t:[4,5,5,7,2],what:'寫標案的提案文件',meta:'幫公司贏生意的文書',pay:'平均約 $81K / 年',start:'幫正在投標的小公司',kw:'proposal writer'},
+ {id:8,s:'採購代理',name:'採購代理',market:9,w:{comm:3,enW:2,domain:2,proc:2,data:1,ai:1},t:[8,4,4,6,5],what:'找工廠、比價、驗貨、出貨',meta:'企業的私人購物顧問',pay:'抽佣 3–10% + 月費；$2,000 單約 8–10%，超過 $100,000 單約 3–4%，長期月費 $1,500–$5,000',start:'幫小型網路賣家找供應商',kw:'sourcing agent'},
+ {id:9,s:'廣告投手',name:'廣告投手',market:9.5,w:{mkt:3,data:3,ai:2,zhW:1,proc:1},t:[4,3,4,8,4],what:'決定廣告的錢花在哪',meta:'決定企業的錢花在哪的人',pay:'平均約 $81.9K / 年',start:'免費試做，做出成果，再收費',kw:'Google Ads specialist'}
+];
+const DEF={ab:{domain:8,enW:7,zhW:7,comm:8,proc:7,data:6,mkt:6,ai:5},tr:{social:7,stable:6,repeat:4,free:6,real:3},tools:['ai','xls','ppt','trans'],exp:['rfq','vendor','expo','visit','bench','train','report','csat','chip']};
+const PERSONAS=[
+ {n:'對外連結型',f:()=>s.tr.social*.7+s.tr.real*.3},{n:'結構整理型',f:()=>s.tr.repeat*.6+(10-s.tr.social)*.4},
+ {n:'試作衝刺型',f:()=>(10-s.tr.stable)*.5+s.tr.free*.5},{n:'穩健專家型',f:()=>s.tr.stable*.7+(10-s.tr.free)*.3}
+];
+const TABS=[
+ {k:'home',n:'結果',t:'副業連結',ic:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>'},
+ {k:'assess',n:'評估',t:'評估',ic:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>'},
+ {k:'cards',n:'閃卡',t:'閃卡',ic:'<rect x="4" y="5" width="16" height="12" rx="2"/><path d="M7 21h10"/>'},
+ {k:'plan',n:'行動',t:'30 天行動',ic:'<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>'},
+ {k:'more',n:'更多',t:'更多',ic:'<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>'}
+];
+const STEPS=[...ABIL.map(a=>({t:'ab',k:a.k})),...TRAITS.map(t=>({t:'tr',k:t.k})),{t:'tools'},{t:'exp'}];
+const KEY='ai-side-app-v1';
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const autoP=/Android/i.test(navigator.userAgent)?'android':'ios';
+let s={...JSON.parse(JSON.stringify(DEF)),sel:null,tab:'home',step:0,plat:'auto',done:{}};
+try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&p.ab&&p.tr)s={...s,...p,sel:null,tab:'home',step:0}}}catch(e){}
+const $=q=>document.querySelector(q);
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const aName=k=>ABIL.find(a=>a.k===k).n;
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify({ab:s.ab,tr:s.tr,tools:s.tools,exp:s.exp,plat:s.plat,done:s.done}))}catch(e){}};
+
+function compute(){
+  return JOBS.map(j=>{
+    let num=0,den=0;const con=[];
+    for(const k in j.w){num+=j.w[k]*s.ab[k];den+=j.w[k]*10;con.push({k,w:j.w[k],u:s.ab[k]})}
+    const ability=num/den*100;
+    const pers=100-(j.t.reduce((a,t,i)=>a+Math.abs(t-s.tr[TRAITS[i].k]),0)/5)*10;
+    const tb=Math.min(6,TOOLS.filter(t=>s.tools.includes(t.k)&&t.j.includes(j.id)).length*1.5);
+    const eb=Math.min(8,EXPS.filter(e=>s.exp.includes(e.k)&&e.j.includes(j.id)).length*2);
+    const bonus=tb+eb+(j.market-7.5)*2;
+    return {j,ability,pers,bonus,score:Math.max(0,Math.min(100,.55*ability+.25*pers+bonus))};
+  }).sort((a,b)=>b.score-a.score);
+}
+const platform=()=>s.plat==='auto'?autoP:s.plat;
+function ctx(){const res=compute();const id=s.sel&&JOBS.some(j=>j.id===s.sel)?s.sel:res[0].j.id;return {res,r:res.find(x=>x.j.id===id),id}}
+
+function tween(el,to,dur=800){
+  cancelAnimationFrame(el._raf);const from=0;
+  if(reduce){el.textContent=Math.round(to);return}
+  const t0=performance.now();(function f(t){const k=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-k,3);el.textContent=Math.round(from+(to-from)*e);if(k<1)el._raf=requestAnimationFrame(f)})(t0);
+}
+function netSvg(res,selId){
+  const CX=260,CY=260,RR=165;
+  let links='',nodes='';
+  JOBS.forEach((j,i)=>{
+    const r=res.find(x=>x.j.id===j.id),idx=res.indexOf(r),v=r.score/100,rad=15+v*v*22;
+    const a=-Math.PI/2+i*2*Math.PI/JOBS.length,x=CX+Math.cos(a)*RR,y=CY+Math.sin(a)*RR,lx=CX+Math.cos(a)*(RR+50),ly=CY+Math.sin(a)*(RR+50);
+    const anc=Math.abs(Math.cos(a))<.2?'middle':Math.cos(a)>0?'start':'end';
+    links+=`<line class="link" x1="${CX}" y1="${CY}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" style="stroke-width:${(1+v*v*6).toFixed(1)};opacity:${(.15+v*.8).toFixed(2)};animation-duration:${(3.4-v*2.4).toFixed(2)}s"/>`;
+    nodes+=`<g class="node${idx===0?' top':''}${j.id===selId?' sel':''}" data-sel="${j.id}"><circle class="halo" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(rad+8).toFixed(1)}"/><circle class="dot" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${rad.toFixed(1)}"/><text class="sc" x="${x.toFixed(1)}" y="${(y+4).toFixed(1)}">${Math.round(r.score)}</text><text class="nm" x="${lx.toFixed(1)}" y="${(ly+4).toFixed(1)}" style="text-anchor:${anc}">${esc(j.s)}</text></g>`;
+  });
+  return `<svg class="net" viewBox="-40 0 600 520" role="img" aria-label="你與九種工作的連結圖">${links}<circle class="pulse" cx="260" cy="260" r="34"/><circle class="pulse" style="animation-delay:1.5s" cx="260" cy="260" r="34"/>${nodes}<circle class="hub" cx="260" cy="260" r="34"/><text x="260" y="267" text-anchor="middle" font-size="20" font-weight="900" fill="var(--ink)">你</text></svg>`;
+}
+const gaugeSvg=(id,r,w,col)=>{const c=2*Math.PI*r;return `<circle class="trk" cx="${r+w}" cy="${r+w}" r="${r}" stroke-width="${w}"/><circle class="prog" id="${id}" cx="${r+w}" cy="${r+w}" r="${r}" stroke-width="${w}" stroke="${col}" stroke-dasharray="${c.toFixed(2)}" stroke-dashoffset="${c.toFixed(2)}" data-c="${c.toFixed(2)}"/>`};
+function fillRing(id,pct){const e=document.getElementById(id);if(!e)return;const c=+e.dataset.c;requestAnimationFrame(()=>requestAnimationFrame(()=>{e.style.strokeDashoffset=(c*(1-Math.max(0,Math.min(1,pct)))).toFixed(1)}))}
+
+/* ---------- views ---------- */
+const V={};
+V.home=()=>{
+  const {res,r,id}=ctx(),rank=res.indexOf(r)+1;
+  const ps=PERSONAS.map(p=>({n:p.n,v:p.f()})).sort((a,b)=>b.v-a.v)[0].n;
+  setTimeout(()=>{tween($('#gNum'),r.score);fillRing('gp',r.score/100)},30);
+  return `<div class="card tonal"><div class="hero">
+      <div class="gauge"><svg viewBox="0 0 130 130" aria-hidden="true"><defs><linearGradient id="gg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--accent2)"/><stop offset="1" style="stop-color:var(--accent)"/></linearGradient></defs>${gaugeSvg('gp',55,10,'url(#gg)')}</svg><div class="in"><b id="gNum">0</b><small>配對分</small></div></div>
+      <div style="display:grid;gap:3px;min-width:0"><span class="rk">${rank===1?'第 1 名・最適合你':'第 '+rank+' 名'}</span><div class="jn">${esc(r.j.name)}</div><p class="meta">${esc(r.j.meta)}</p><span class="chipP">${ps}</span></div>
+    </div>
+    <div class="facts"><div><em>薪水</em>${esc(r.j.pay)}</div><div><em>怎麼開始</em>${esc(r.j.start)}</div>${r.j.inferred?'<p class="note">此項部分內容為補充，請對照影片。</p>':''}</div></div>
+  <div><div class="label">連結圖　點節點切換</div><div class="card">${netSvg(res,id)}</div></div>
+  <div><div class="label">全部排名</div><div class="list">${res.map((x,i)=>`<button type="button" class="item" data-sel="${x.j.id}" aria-current="${x.j.id===id}"><span class="n">${i+1}</span><span class="nm">${esc(x.j.name)}</span><span class="v">${Math.round(x.score)}</span><span class="track"><span class="fill" style="width:${x.score.toFixed(0)}%"></span></span></button>`).join('')}</div></div>`;
+};
+V.assess=()=>{
+  const st=STEPS[s.step],n=STEPS.length;
+  const seg=`<div class="seg" aria-hidden="true">${STEPS.map((_,i)=>`<i class="${i<=s.step?'on':''}"></i>`).join('')}</div>`;
+  let body='';
+  if(st.t==='ab'){const a=ABIL.find(x=>x.k===st.k);
+    body=`<small>能力自評</small><h2>你的「${a.n}」有多強？</h2><div class="bigv" id="bv">${s.ab[st.k]}</div><input type="range" id="sl" min="0" max="10" value="${s.ab[st.k]}" aria-label="${a.n}"><div class="ends"><span>完全不會</span><span>很強</span></div><p class="meta">${a.h}</p>`}
+  else if(st.t==='tr'){const t=TRAITS.find(x=>x.k===st.k);
+    body=`<small>個性與生活條件</small><h2>${t.n}</h2><div class="bigv" id="bv">${s.tr[st.k]}</div><input type="range" id="sl" min="0" max="10" value="${s.tr[st.k]}" aria-label="${t.n}"><div class="ends"><span>${t.lo}</span><span>${t.hi}</span></div>`}
+  else if(st.t==='tools'){body=`<small>常用工具</small><h2>你熟悉哪些工具？</h2><div class="chips">${TOOLS.map(t=>`<button type="button" class="chip" data-g="tools" data-k="${t.k}" aria-pressed="${s.tools.includes(t.k)}">${t.n}</button>`).join('')}</div>`}
+  else{body=`<small>過往經驗</small><h2>你做過哪些事？</h2><div class="chips">${EXPS.map(t=>`<button type="button" class="chip" data-g="exp" data-k="${t.k}" aria-pressed="${s.exp.includes(t.k)}">${t.n}</button>`).join('')}</div>`}
+  const top=compute()[0];
+  return `${seg}<div class="card tonal"><div class="q"><small>第 ${s.step+1} / ${n} 題</small>${body}</div></div>
+  <p class="live" id="live">目前最適合：<b>${esc(top.j.name)}</b>　<span class="num">${Math.round(top.score)}</span></p>
+  <div class="nav"><button class="btn ghost" id="prev" type="button" ${s.step===0?'disabled':''}>上一題</button><button class="btn" id="next" type="button">${s.step===n-1?'看結果':'下一題'}</button></div>`;
+};
+V.cards=()=>{
+  const {res}=ctx();
+  return `<div class="count" id="cnt">第 1 名，左右滑動，點一下翻面</div>
+  <div class="car" id="car" style="margin:0 calc(-1*max(16px,env(safe-area-inset-left,0px)))">${res.map((x,i)=>`<button class="fc" type="button" aria-pressed="false" data-i="${i}" aria-label="${esc(x.j.name)}，翻面"><div class="in2">
+    <div class="face"><span class="rk">第 ${i+1} 名・影片 ${x.j.market}</span><h3>${esc(x.j.name)}</h3><div class="score">${Math.round(x.score)}</div><p class="meta">${esc(x.j.meta)}</p><div class="track" style="grid-column:auto"><span class="fill" style="width:${x.score.toFixed(0)}%"></span></div><span class="hint">點一下翻面</span></div>
+    <div class="face back"><h3>${esc(x.j.name)}</h3><dl><div><dt>做什麼</dt><dd>${esc(x.j.what)}</dd></div><div><dt>薪水</dt><dd>${esc(x.j.pay)}</dd></div><div><dt>怎麼開始</dt><dd>${esc(x.j.start)}</dd></div><div><dt>搜尋關鍵字</dt><dd>${esc(x.j.kw)}</dd></div></dl></div>
+  </div></button>`).join('')}</div>`;
+};
+const taskList=r=>[
+  ['第 1 週','確認公司兼職與保密規定'],['第 1 週',`做出作品：${r.j.start}`],
+  ['第 2 週','在 1 到 2 個接案網站建立檔案'],['第 2 週',`搜尋「${r.j.kw}」並收藏 20 筆職缺`],
+  ['第 3 週','投出 10 份客製化提案'],['第 3 週','整理 3 句自我介紹與報價'],
+  ['第 4 週','接下第一筆小案並準時交付'],['第 4 週','請客戶留下評價']
+];
+V.plan=()=>{
+  const {r}=ctx(),tasks=taskList(r),done=s.done[r.j.id]||[],pct=done.length/tasks.length;
+  setTimeout(()=>fillRing('pp',pct),30);
+  return `<div class="card tonal"><div class="ringrow"><div class="gauge" style="width:84px"><svg viewBox="0 0 84 84" aria-hidden="true">${gaugeSvg('pp',34,8,'var(--accent)')}</svg><div class="in"><b style="font-size:22px">${Math.round(pct*100)}%</b></div></div>
+    <div><span class="rk">30 天行動</span><div class="jn" style="font-size:18px">${esc(r.j.name)}</div><p class="meta">完成 ${done.length} / ${tasks.length}</p></div></div></div>
+  <div class="list">${tasks.map((t,i)=>`<button type="button" class="ck" role="checkbox" aria-checked="${done.includes(i)}" data-t="${i}"><span class="b"></span><span class="t"><small>${t[0]}</small>${esc(t[1])}</span></button>`).join('')}</div>
+  <div><div class="label">接案網站</div><div class="list">
+    <a class="item" href="https://www.upwork.com" target="_blank" rel="noopener"><span>Upwork<small>全球案件，英文為主</small></span><span class="go">開啟</span></a>
+    <a class="item" href="https://www.fiverr.com" target="_blank" rel="noopener"><span>Fiverr<small>上架服務套餐等客戶下單</small></span><span class="go">開啟</span></a>
+    <a class="item" href="https://www.freelancer.com" target="_blank" rel="noopener"><span>Freelancer<small>競標式報價</small></span><span class="go">開啟</span></a>
+    <a class="item" href="https://case.104.com.tw" target="_blank" rel="noopener"><span>104 外包網<small>台灣中文案件</small></span><span class="go">開啟</span></a>
+    <a class="item" href="https://contra.com" target="_blank" rel="noopener"><span>Contra<small>作品集型平台</small></span><span class="go">開啟</span></a></div></div>
+  <p class="note">兼職前請先確認公司的兼職與保密規定，也不要使用公司資料當作品集。</p>`;
+};
+V.more=()=>`
+  <div><div class="label">介面風格</div><div class="sw" role="group" aria-label="介面風格">${[['auto','自動'],['ios','iOS'],['android','Android']].map(p=>`<button type="button" data-p="${p[0]}" aria-pressed="${s.plat===p[0]}">${p[1]}</button>`).join('')}</div><p class="note" style="padding:6px 4px">自動會依裝置判斷。目前使用：${platform()==='ios'?'iOS':'Android'} 風格。</p></div>
+  <div class="card"><h3 style="font-size:15px;margin-bottom:8px">兩種平台的差異</h3><table><thead><tr><th></th><th>iOS</th><th>Android</th></tr></thead><tbody>
+    <tr><td>標題</td><td>左上大標題</td><td>頂部標題列</td></tr>
+    <tr><td>底部導覽</td><td>半透明標籤列</td><td>圓角指示的導覽列</td></tr>
+    <tr><td>按鈕</td><td>圓角矩形</td><td>膠囊形，加懸浮按鈕</td></tr>
+    <tr><td>字體</td><td>SF（系統）</td><td>Roboto（系統）</td></tr></tbody></table></div>
+  <div class="card"><h3 style="font-size:15px;margin-bottom:8px">變成真正的 App</h3><ul class="p">
+    <li><b>最快：加到主畫面</b>。iOS 用 Safari 的分享選單，Android 用 Chrome 選單。要完整安裝需另外加上 manifest 與離線設定，此預覽頁本身無法直接安裝。</li>
+    <li><b>原生外殼</b>：用 Capacitor 把這份網頁包成 iOS 與 Android App，一套程式碼兩邊上架。</li>
+    <li><b>重寫成原生</b>：Flutter、React Native，或拖拉式的 FlutterFlow。</li>
+    <li><b>上架</b>：Apple 開發者計畫為年費制，Google Play 開發者帳號為一次性費用，金額請以官方公告為準。</li></ul>
+    <p class="note" style="margin-top:8px">設計規範：<a href="https://developer.apple.com/design/human-interface-guidelines/" target="_blank" rel="noopener">Apple Human Interface Guidelines</a>、<a href="https://m3.material.io" target="_blank" rel="noopener">Material Design 3</a></p></div>
+  <button class="btn ghost" id="reset" type="button">還原評估預設值</button>
+  <p class="note">分數依你的自評與影片截圖資料計算，僅供參考。金額取自影片，以 $ 標示。</p>`;
+
+function render(keepScroll){
+  const app=$('#app');app.dataset.p=platform();
+  const tab=TABS.find(t=>t.k===s.tab);
+  $('#ttl').textContent=tab.t;
+  $('#sub').textContent=s.tab==='home'?'':'';
+  $('#tabs').innerHTML=TABS.map(t=>`<button type="button" role="tab" aria-selected="${t.k===s.tab}" data-tab="${t.k}"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true">${t.ic}</svg></span>${t.n}</button>`).join('');
+  const v=$('#view');
+  v.innerHTML=`<div class="view">${V[s.tab]()}</div>`;
+  if(!keepScroll)v.scrollTop=0;
+  $('#fab').hidden=s.tab!=='home';
+  save();
+}
+
+document.addEventListener('click',e=>{
+  const tb=e.target.closest('[data-tab]');
+  if(tb){s.tab=tb.dataset.tab;render();return}
+  const sel=e.target.closest('[data-sel]');
+  if(sel){s.sel=+sel.dataset.sel;render(true);return}
+  const chip=e.target.closest('.chip');
+  if(chip){const a=s[chip.dataset.g],k=chip.dataset.k,i=a.indexOf(k);if(i>=0)a.splice(i,1);else a.push(k);chip.setAttribute('aria-pressed',i<0);save();return}
+  const fc=e.target.closest('.fc');
+  if(fc){fc.setAttribute('aria-pressed',fc.getAttribute('aria-pressed')!=='true');return}
+  const ck=e.target.closest('[data-t]');
+  if(ck){const {r}=ctx(),d=s.done[r.j.id]=s.done[r.j.id]||[],i=+ck.dataset.t,p=d.indexOf(i);if(p>=0)d.splice(p,1);else d.push(i);render(true);return}
+  const pl=e.target.closest('[data-p]');
+  if(pl&&pl.tagName==='BUTTON'){s.plat=pl.dataset.p;render(true);return}
+  if(e.target.closest('#next')){if(s.step<STEPS.length-1){s.step++;render()}else{s.tab='home';s.step=0;render()}return}
+  if(e.target.closest('#prev')){if(s.step>0){s.step--;render()}return}
+  if(e.target.closest('#reset')){const keep={plat:s.plat};s={...s,...JSON.parse(JSON.stringify(DEF)),sel:null,done:{},...keep};render(true);return}
+  if(e.target.closest('#fab')){s.tab='assess';render()}
+});
+document.addEventListener('input',e=>{
+  if(e.target.id!=='sl')return;
+  const st=STEPS[s.step];s[st.t][st.k]=+e.target.value;$('#bv').textContent=e.target.value;
+  const top=compute()[0];$('#live').innerHTML=`目前最適合：<b>${esc(top.j.name)}</b>　<span class="num">${Math.round(top.score)}</span>`;save();
+});
+document.addEventListener('scroll',e=>{
+  if(e.target.id!=='car')return;
+  const c=e.target,first=c.firstElementChild;if(!first)return;
+  const i=Math.round(c.scrollLeft/(first.offsetWidth+12));
+  $('#cnt').textContent=`第 ${Math.min(JOBS.length,i+1)} 名，左右滑動，點一下翻面`;
+},true);
+render();
+</script>
