@@ -1,0 +1,487 @@
+<title>AI 副業配對器</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: sticky live "top pick" bar; left input panel (sticky on desktop), right results: persona, radar detail, ranking, flip cards, plan, platforms. */
+:root{
+  --bg:#F1F5F8; --surface:#FFFFFF; --surface2:#E7EDF2; --ink:#14212B; --muted:#566574;
+  --line:#D3DCE4; --accent:#0B7A75; --accent-ink:#FFFFFF; --accent-soft:#DDF1EF; --warm:#A45F00; --warm-soft:#F8EBD6;
+  --font-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --font-num:"Space Grotesk","Noto Sans TC",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D151B; --surface:#15212A; --surface2:#1D2C37; --ink:#E7EEF3; --muted:#9BABB7;
+    --line:#2B3C48; --accent:#44D0C0; --accent-ink:#05201D; --accent-soft:#163A39; --warm:#F0B054; --warm-soft:#3A2D14; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D151B; --surface:#15212A; --surface2:#1D2C37; --ink:#E7EEF3; --muted:#9BABB7;
+  --line:#2B3C48; --accent:#44D0C0; --accent-ink:#05201D; --accent-soft:#163A39; --warm:#F0B054; --warm-soft:#3A2D14; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 var(--font-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 56px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:1120px;margin:0 auto}
+h1,h2,h3{margin:0;line-height:1.25;text-wrap:balance}
+h1{font-size:clamp(26px,5vw,38px);font-weight:900;letter-spacing:.01em}
+h2{font-size:20px;font-weight:700}
+h3{font-size:16px;font-weight:700}
+p{margin:0}
+.num{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.eyebrow{font-size:12px;letter-spacing:.12em;color:var(--muted);font-weight:500}
+
+/* sticky bar */
+.bar{position:sticky;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:11;margin-top:8px;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;box-shadow:0 4px 16px rgba(10,30,40,.08)}
+.bar .lbl{font-size:12px;color:var(--muted)}
+.bar .top{font-weight:700;flex:1;min-width:0}
+.bar .sc{font-family:var(--font-num);font-weight:700;font-size:22px;color:var(--accent);font-variant-numeric:tabular-nums}
+.btn{font:inherit;font-size:14px;font-weight:500;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:6px 12px}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.intro{padding:28px 0 20px;display:grid;gap:10px;max-width:760px}
+.intro p{color:var(--muted)}
+
+.grid{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+
+.panel{display:grid;gap:16px}
+@media (min-width:901px){.panel{position:sticky;top:calc(env(safe-area-inset-top,0px) + 76px);max-height:calc(100vh - 96px);overflow:auto;padding-right:4px}}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:14px;min-width:0}
+.box > header{display:grid;gap:2px}
+.box > header small{color:var(--muted);font-size:13px}
+.sl{display:grid;gap:2px}
+.sl label{display:flex;justify-content:space-between;font-weight:500;font-size:14px}
+.sl output{font-family:var(--font-num);font-weight:700;color:var(--accent)}
+.sl small{color:var(--muted);font-size:12px}
+.ends{display:flex;justify-content:space-between;gap:8px;color:var(--muted);font-size:12px}
+input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:inherit;font-size:13px;cursor:pointer;border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:999px;padding:5px 12px;line-height:1.4}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:500}
+
+.results{display:grid;gap:24px;min-width:0}
+.sec{display:grid;gap:12px;min-width:0}
+.sec > .head{display:grid;gap:2px}
+.sec > .head p{color:var(--muted);font-size:14px}
+
+.persona{background:var(--accent-soft);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:6px}
+.persona b{font-size:18px}
+
+.detail{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
+@media (max-width:700px){.detail{grid-template-columns:minmax(0,1fr)}}
+.detail .l{display:grid;gap:10px;align-content:start;min-width:0}
+.big{font-family:var(--font-num);font-weight:700;font-size:56px;line-height:1;color:var(--accent);font-variant-numeric:tabular-nums}
+.big small{font-size:18px;color:var(--muted);font-weight:500}
+.split{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.split div{background:var(--surface2);border-radius:8px;padding:8px 10px;display:grid}
+.split span{font-size:12px;color:var(--muted)}
+.split b{font-family:var(--font-num);font-size:18px;font-variant-numeric:tabular-nums}
+.kv{display:grid;gap:8px;font-size:14px}
+.kv div{display:grid;grid-template-columns:64px minmax(0,1fr);gap:8px}
+.kv dt,.kv span.k{color:var(--muted)}
+.tag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:999px;background:var(--warm-soft);color:var(--warm);font-weight:500}
+.tag.g{background:var(--accent-soft);color:var(--accent)}
+svg.radar{width:100%;height:auto;max-width:380px;margin:0 auto;display:block}
+.legend{display:flex;gap:16px;justify-content:center;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.legend i{display:inline-block;width:18px;height:0;border-top:3px solid var(--accent);vertical-align:middle;margin-right:6px}
+.legend i.w{border-top:2px dashed var(--warm)}
+
+.rank{display:grid;gap:8px}
+.row{display:grid;grid-template-columns:24px minmax(0,150px) minmax(0,1fr) 44px;gap:10px;align-items:center;width:100%;text-align:left;
+  font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}
+.row[aria-current="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.row .n{font-family:var(--font-num);color:var(--muted);font-weight:700}
+.row .nm{font-weight:500;font-size:14px;line-height:1.35}
+.track{height:12px;background:var(--surface2);border-radius:999px;overflow:hidden}
+.fill{height:100%;background:var(--accent);border-radius:999px;transition:width .35s}
+.row .v{font-family:var(--font-num);font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+@media (max-width:520px){.row{grid-template-columns:20px minmax(0,1fr) 40px}.row .track{grid-column:2 / 4;grid-row:2}}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.card{perspective:900px;cursor:pointer;border-radius:14px;display:block}
+.inner{display:grid;transform-style:preserve-3d;transition:transform .5s}
+.card[aria-pressed="true"] .inner{transform:rotateY(180deg)}
+.face{grid-area:1/1;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:8px;align-content:start;min-width:0}
+.face.back{transform:rotateY(180deg);font-size:13px;line-height:1.55}
+.card:hover .face{border-color:var(--accent)}
+.face .rk{font-size:12px;color:var(--muted);display:flex;justify-content:space-between}
+.face .score{font-family:var(--font-num);font-size:40px;font-weight:700;color:var(--accent);line-height:1;font-variant-numeric:tabular-nums}
+.face .hint{font-size:12px;color:var(--muted)}
+.face.back b{font-weight:700}
+@media (prefers-reduced-motion:reduce){.inner,.fill{transition:none}}
+
+.plan{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.plan > div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:4px;align-content:start;font-size:14px}
+.plan b{color:var(--accent)}
+
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--muted);font-weight:500;letter-spacing:.06em}
+tr:last-child td{border-bottom:0}
+a{color:var(--accent);font-weight:500}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.note{font-size:13px;color:var(--muted)}
+ul.plain{margin:0;padding-left:18px;display:grid;gap:4px;font-size:14px}
+</style>
+
+<div class="wrap">
+  <div class="bar" id="bar">
+    <div style="min-width:0;flex:1">
+      <div class="lbl">目前最適合你的工作</div>
+      <div class="top" id="barTop">計算中…</div>
+    </div>
+    <div class="sc" id="barSc">0</div>
+    <a class="btn pri" href="#detail" style="text-decoration:none">看詳情</a>
+  </div>
+
+  <div class="intro">
+    <span class="eyebrow">AI 副業配對器</span>
+    <h1>從 9 種接案工作，找出最適合你的一個</h1>
+    <p>左邊填能力、個性、工具和經驗，右邊會即時算出排名。已先依你目前的市場經理工作內容預填，請依實際情況調整。分數是依你的自評與影片提供的職缺資料算出的參考值，不是測驗結果。</p>
+  </div>
+
+  <div class="grid">
+    <aside class="panel" aria-label="輸入條件">
+      <section class="box">
+        <header><h2>能力自評</h2><small>0 代表完全不會，10 代表很強</small></header>
+        <div id="abil" style="display:grid;gap:12px"></div>
+      </section>
+      <section class="box">
+        <header><h2>個性與生活條件</h2><small>沒有對錯，選接近你的位置</small></header>
+        <div id="trait" style="display:grid;gap:14px"></div>
+      </section>
+      <section class="box">
+        <header><h2>常用工具</h2><small>點選你熟悉的</small></header>
+        <div class="chips" id="tools"></div>
+      </section>
+      <section class="box">
+        <header><h2>過往經驗</h2><small>你做過的事會替相關工作加分</small></header>
+        <div class="chips" id="exps"></div>
+      </section>
+      <button class="btn" id="reset" type="button">還原預設值</button>
+    </aside>
+
+    <div class="results">
+      <section class="persona" id="persona" aria-live="polite"></section>
+
+      <section class="sec" id="detail">
+        <div class="head"><h2>工作詳情與能力對照</h2><p>點下方排名或卡片可切換查看。</p></div>
+        <div class="detail" id="detailBox"></div>
+      </section>
+
+      <section class="sec">
+        <div class="head"><h2>配對排名</h2><p>分數由能力 55%、個性 25% 加上工具、經驗與影片市場評分的加分組成。</p></div>
+        <div class="rank" id="rank"></div>
+      </section>
+
+      <section class="sec">
+        <div class="head"><h2>閃卡總覽</h2><p>點卡片翻面，看做什麼、薪水和怎麼開始。</p></div>
+        <div class="cards" id="cards"></div>
+      </section>
+
+      <section class="sec">
+        <div class="head"><h2 id="planTitle">30 天行動計畫</h2><p id="planSub"></p></div>
+        <div class="plan" id="plan"></div>
+        <p class="note">兼職前請先確認公司的兼職與保密規定，也不要使用公司的客戶資料或內部文件當作品集。</p>
+      </section>
+
+      <section class="sec">
+        <div class="head"><h2>接案網站</h2><p>先選 1 到 2 個平台建立檔案即可，費率與規則請到各站確認。</p></div>
+        <div class="tbl"><table>
+          <thead><tr><th>平台</th><th>特色</th><th>適合的工作</th></tr></thead>
+          <tbody>
+            <tr><td><a href="https://www.upwork.com" target="_blank" rel="noopener">Upwork</a></td><td>全球最大型之一，案件以英文為主，有採購代理等分類</td><td>採購代理、標案、SOP、廣告、助理</td></tr>
+            <tr><td><a href="https://www.fiverr.com" target="_blank" rel="noopener">Fiverr</a></td><td>賣家先上架「服務套餐」，客戶來下單</td><td>SOP、商品上架、標案文件、AI 相關服務</td></tr>
+            <tr><td><a href="https://www.freelancer.com" target="_blank" rel="noopener">Freelancer</a></td><td>競標式，客戶發案後多人報價</td><td>商品上架、助理、廣告</td></tr>
+            <tr><td><a href="https://case.104.com.tw" target="_blank" rel="noopener">104 外包網</a></td><td>台灣中文案件，溝通沒有語言門檻</td><td>補助申請、SOP、標案、中文 AI 訓練</td></tr>
+            <tr><td><a href="https://contra.com" target="_blank" rel="noopener">Contra</a></td><td>偏作品集型的接案平台</td><td>需要展示成果的工作，如廣告投手</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <section class="sec">
+        <div class="head"><h2>把這個配對器做成 App</h2><p>參考評分、結案類 App 的畫面做法：一次一個重點、閃卡翻面、大數字加進度條。</p></div>
+        <div class="two">
+          <div class="box">
+            <h3>介面原則</h3>
+            <ul class="plain">
+              <li>一個畫面只問一件事，避免長表單</li>
+              <li>結果先給排名和分數，細節放在翻面或展開</li>
+              <li>用大數字、進度條、雷達圖取代文字敘述</li>
+              <li>每張卡片都有一個明確的下一步</li>
+            </ul>
+          </div>
+          <div class="box">
+            <h3>設計與打造平台</h3>
+            <ul class="plain">
+              <li><a href="https://www.figma.com" target="_blank" rel="noopener">Figma</a>：畫介面草稿與流程</li>
+              <li><a href="https://www.canva.com" target="_blank" rel="noopener">Canva</a>：做閃卡、簡報與社群視覺</li>
+              <li><a href="https://www.glideapps.com" target="_blank" rel="noopener">Glide</a>：試算表直接變 App</li>
+              <li><a href="https://www.flutterflow.io" target="_blank" rel="noopener">FlutterFlow</a>：拖拉式手機 App</li>
+              <li><a href="https://bubble.io" target="_blank" rel="noopener">Bubble</a>：免寫程式的網頁應用</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn pri" id="copy" type="button">複製我的結果</button>
+        <span class="note" id="copyMsg" aria-live="polite"></span>
+      </div>
+      <p class="note">薪資與收費金額取自影片截圖，以 $ 標示。中文 AI 訓練師的詳細頁未在截圖內，相關欄位為依常見做法補充，請對照影片修正。</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const ABIL=[
+ {k:'domain',n:'產業專業',h:'網通、電子產業知識'},
+ {k:'enW',n:'英文文件',h:'信件、提案、規格書'},
+ {k:'zhW',n:'中文文件',h:'報告、手冊、計畫書'},
+ {k:'comm',n:'對外溝通',h:'客戶、供應商、原廠'},
+ {k:'proc',n:'流程整理',h:'把事情拆成步驟'},
+ {k:'data',n:'數據分析',h:'報表、比較、判讀'},
+ {k:'mkt',n:'行銷廣告',h:'展覽、活動、投放'},
+ {k:'ai',n:'AI 工具運用',h:'提示詞、自動化'}
+];
+const TRAITS=[
+ {k:'social',n:'人際互動',lo:'偏好獨自作業',hi:'喜歡與人互動'},
+ {k:'stable',n:'收入穩定度',lo:'願意衝高、承擔波動',hi:'偏好穩定收入'},
+ {k:'repeat',n:'重複細節',lo:'討厭重複',hi:'耐得住細節'},
+ {k:'free',n:'先試做再收費',lo:'不想免費試做',hi:'願意先做作品'},
+ {k:'real',n:'即時回覆',lo:'上班時間難回覆',hi:'可隨時回覆'}
+];
+const TOOLS=[
+ {k:'ai',n:'ChatGPT / Claude 等 AI',j:[1,2,3,5,6,7,9]},
+ {k:'xls',n:'Excel / Google 試算表',j:[3,4,8,9]},
+ {k:'ppt',n:'Word / PowerPoint',j:[5,6,7]},
+ {k:'design',n:'Canva / Figma',j:[3,5,9]},
+ {k:'notion',n:'Notion 等文件工具',j:[2,5,6]},
+ {k:'ads',n:'Google / Meta 廣告後台',j:[9]},
+ {k:'crm',n:'CRM / 自動化（Zapier 等）',j:[2,4]},
+ {k:'shop',n:'電商後台（Shopify、蝦皮）',j:[3,8]},
+ {k:'trans',n:'翻譯校對（DeepL 等）',j:[1,7,8]}
+];
+const EXPS=[
+ {k:'rfq',n:'寫過 RFQ / 提案',j:[6,7]},
+ {k:'vendor',n:'管理 design house / 供應商',j:[2,8]},
+ {k:'expo',n:'展覽與活動協調',j:[4,9]},
+ {k:'visit',n:'客戶拜訪與需求訪談',j:[2,4,8]},
+ {k:'bench',n:'競品 benchmark 分析',j:[1,3,9]},
+ {k:'train',n:'內部培訓、教材製作',j:[1,5,6]},
+ {k:'report',n:'市調報告整理（IDC、Omdia）',j:[1,6,7]},
+ {k:'csat',n:'售後支援與滿意度調查',j:[2,4]},
+ {k:'chip',n:'國外芯片廠技術交流',j:[1,7,8]}
+];
+/* w: 各能力重要度 0-3；t: 工作的個性需求 [社交,穩定,重複,先試做,即時] */
+const JOBS=[
+ {id:1,name:'中文 AI 訓練師',market:8.5,w:{zhW:3,ai:3,domain:2,proc:1,data:1},t:[2,7,7,4,2],
+  what:'評估與改寫 AI 的中文回答',meta:'AI 的中文品質把關人',pay:'截圖未列出，請對照影片補上',
+  start:'挑 3 則中文 AI 回答，做評分與改寫當樣本',inferred:true,
+  fit:'網通與無線的技術名詞審稿、判斷 AI 回答對不對，是你的產業知識可加分的地方。',kw:'AI trainer, Chinese data annotation'},
+ {id:2,name:'會用 AI 的線上助理',market:8,w:{comm:2,ai:3,proc:2,zhW:1,enW:1},t:[8,5,5,6,7],
+  what:'幫忙碌的老闆處理雜事',meta:'不用進辦公室的秘書',pay:'時薪 $10–50+',
+  start:'選一種老闆，提出 3 件你能幫他做的事',
+  fit:'適合服務小型技術公司老闆，整理市調、回信、排行程。你的客戶拜訪與資料整理經驗可轉用。',kw:'virtual assistant, executive assistant'},
+ {id:3,name:'電商商品目錄專員',market:7.5,w:{zhW:2,data:2,proc:2,ai:2,mkt:1},t:[1,9,9,3,1],
+  what:'商品上架、寫描述、分類',meta:'1 萬個商品的圖書館員',pay:'年薪 $45K–89K',
+  start:'重寫 20 個商品當作品',
+  fit:'你熟悉 Switch / EAP 規格表，整理產品資料很快。工作偏重複，天花板比其他工作低。',kw:'product listing, catalog specialist'},
+ {id:4,name:'快速回覆名單專員',market:8,w:{comm:3,proc:2,ai:1,zhW:1},t:[9,4,4,2,10],
+  what:'幾分鐘內聯絡新客人、約時間',meta:'把老闆的行事曆排滿',pay:'時薪 $8–45 + 佣金',
+  start:'按約到的客人收費',
+  fit:'要在幾分鐘內回覆，和上班時間容易衝突。你的客戶溝通經驗有用，但時段難配合。',kw:'appointment setter, lead response'},
+ {id:5,name:'SOP 撰寫員',market:8.5,w:{proc:3,zhW:3,domain:2,ai:2},t:[3,7,6,7,2],
+  what:'寫一步一步的作業手冊',meta:'幫公司寫食譜書',pay:'中位數 $91,670 / 年',
+  start:'免費寫 3 份 SOP',
+  fit:'把內部培訓、樣機測試流程寫成步驟手冊，是你現有工作的延伸。',kw:'SOP writer, process documentation'},
+ {id:6,name:'補助申請撰寫員',market:8,w:{zhW:3,proc:2,domain:2,data:1,ai:2},t:[3,6,5,6,2],
+  what:'幫企業申請補助金',meta:'幫人找到免費的錢',pay:'年薪約 $66K',
+  start:'幫小企業申請一個補助',
+  fit:'計畫書與提案寫作經驗可轉用。要先熟悉各項補助的申請規則與審查重點。',kw:'grant writer'},
+ {id:7,name:'標案撰寫員',market:8.5,w:{domain:3,zhW:2,enW:2,proc:2,ai:2,comm:1},t:[4,5,5,7,2],
+  what:'寫標案的提案文件',meta:'幫公司贏生意的文書',pay:'平均約 $81K / 年',
+  start:'幫正在投標的小公司',
+  fit:'你每天在做 RFQ 應答與 T&W proposal，這項技能可直接轉成接案服務。',kw:'proposal writer, RFP response'},
+ {id:8,name:'採購代理',market:9,w:{comm:3,enW:2,domain:2,proc:2,data:1,ai:1},t:[8,4,4,6,5],
+  what:'找工廠、比價、驗貨、出貨',meta:'企業的私人購物顧問',pay:'抽佣 3–10% + 月費。$2,000 訂單約抽 8–10%，超過 $100,000 約抽 3–4%，長期客戶月費 $1,500–$5,000',
+  start:'幫小型網路賣家找供應商',
+  fit:'管理 design house 與供應商、拜訪國外芯片廠，正是找廠、比價、驗貨的核心經驗。',kw:'sourcing agent, China sourcing'},
+ {id:9,name:'廣告投手',market:9.5,w:{mkt:3,data:3,ai:2,zhW:1,proc:1},t:[4,3,4,8,4],
+  what:'決定廣告的錢花在哪',meta:'決定企業的錢花在哪的人',pay:'平均約 $81.9K / 年',
+  start:'免費試做，做出成果，再收費',
+  fit:'展覽與競品分析讓你懂市場，但需要真的操作廣告帳戶、看數據，要從零練習。',kw:'Google Ads specialist, PPC manager'}
+];
+const DEF={
+ ab:{domain:8,enW:7,zhW:7,comm:8,proc:7,data:6,mkt:6,ai:5},
+ tr:{social:7,stable:6,repeat:4,free:6,real:3},
+ tools:['ai','xls','ppt','trans'],
+ exp:['rfq','vendor','expo','visit','bench','train','report','csat','chip']
+};
+const KEY='ai-side-job-v1';
+let s=JSON.parse(JSON.stringify(DEF)); s.sel=null;
+try{const r=localStorage.getItem(KEY); if(r){const p=JSON.parse(r); if(p&&p.ab&&p.tr){s={...s,...p}}}}catch(e){}
+const $=q=>document.querySelector(q);
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const aName=k=>ABIL.find(a=>a.k===k).n;
+
+function save(){try{localStorage.setItem(KEY,JSON.stringify(s))}catch(e){}}
+
+function buildControls(){
+  $('#abil').innerHTML=ABIL.map(a=>`<div class="sl"><label for="ab-${a.k}">${a.n}<output id="o-ab-${a.k}" class="num">${s.ab[a.k]}</output></label><input type="range" id="ab-${a.k}" data-g="ab" data-k="${a.k}" min="0" max="10" step="1" value="${s.ab[a.k]}"><small>${a.h}</small></div>`).join('');
+  $('#trait').innerHTML=TRAITS.map(t=>`<div class="sl"><label for="tr-${t.k}">${t.n}<output id="o-tr-${t.k}" class="num">${s.tr[t.k]}</output></label><input type="range" id="tr-${t.k}" data-g="tr" data-k="${t.k}" min="0" max="10" step="1" value="${s.tr[t.k]}"><div class="ends"><span>${t.lo}</span><span>${t.hi}</span></div></div>`).join('');
+  $('#tools').innerHTML=TOOLS.map(t=>`<button type="button" class="chip" data-g="tools" data-k="${t.k}" aria-pressed="${s.tools.includes(t.k)}">${t.n}</button>`).join('');
+  $('#exps').innerHTML=EXPS.map(t=>`<button type="button" class="chip" data-g="exp" data-k="${t.k}" aria-pressed="${s.exp.includes(t.k)}">${t.n}</button>`).join('');
+}
+
+function compute(){
+  const res=JOBS.map(j=>{
+    let num=0,den=0;const con=[];
+    for(const k in j.w){num+=j.w[k]*s.ab[k];den+=j.w[k]*10;con.push({k,w:j.w[k],u:s.ab[k]})}
+    const ability=num/den*100;
+    const pers=100-(j.t.reduce((a,t,i)=>a+Math.abs(t-s.tr[TRAITS[i].k]),0)/5)*10;
+    const tb=Math.min(6,TOOLS.filter(t=>s.tools.includes(t.k)&&t.j.includes(j.id)).length*1.5);
+    const eb=Math.min(8,EXPS.filter(e=>s.exp.includes(e.k)&&e.j.includes(j.id)).length*2);
+    const mb=(j.market-7.5)*2;
+    const score=Math.max(0,Math.min(100,.55*ability+.25*pers+tb+eb+mb));
+    const strengths=con.filter(c=>c.u>=6).sort((a,b)=>b.w*b.u-a.w*a.u).slice(0,3).map(c=>`${aName(c.k)} ${c.u}`);
+    const gaps=con.filter(c=>c.w>=2&&c.u<6).map(c=>`${aName(c.k)} ${c.u}`);
+    return {j,score,ability,pers,bonus:tb+eb+mb,strengths,gaps};
+  });
+  return res.sort((a,b)=>b.score-a.score);
+}
+
+const PERSONAS=[
+ {k:'conn',n:'對外連結型',d:'喜歡和人談、反應快，適合要跟客戶或供應商來回溝通的工作。',f:()=>s.tr.social*.7+s.tr.real*.3},
+ {k:'struct',n:'結構整理型',d:'耐得住細節，適合把雜亂資訊整理成文件、手冊與流程。',f:()=>s.tr.repeat*.6+(10-s.tr.social)*.4},
+ {k:'sprint',n:'試作衝刺型',d:'敢先做再收費，適合用成果換訂單的工作。',f:()=>(10-s.tr.stable)*.5+s.tr.free*.5},
+ {k:'steady',n:'穩健專家型',d:'重視穩定收入，適合長期客戶與月費合作。',f:()=>s.tr.stable*.7+(10-s.tr.free)*.3}
+];
+
+function radarSvg(r){
+  const cx=170,cy=150,R=96,n=ABIL.length;
+  const pt=(i,v)=>{const a=-Math.PI/2+i*2*Math.PI/n;return [cx+Math.cos(a)*R*v/10,cy+Math.sin(a)*R*v/10]};
+  const poly=vals=>vals.map((v,i)=>pt(i,v).map(x=>x.toFixed(1)).join(',')).join(' ');
+  let g='';
+  [2.5,5,7.5,10].forEach(v=>{g+=`<polygon points="${poly(ABIL.map(()=>v))}" fill="none" stroke="var(--line)" stroke-width="1"/>`});
+  ABIL.forEach((a,i)=>{
+    const [x,y]=pt(i,10);g+=`<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--line)" stroke-width="1"/>`;
+    const [lx,ly]=pt(i,12.4);const anc=lx<cx-8?'end':lx>cx+8?'start':'middle';
+    g+=`<text x="${lx.toFixed(1)}" y="${(ly+4).toFixed(1)}" text-anchor="${anc}" font-size="12" fill="var(--muted)">${a.n}</text>`;
+  });
+  const req=ABIL.map(a=>(r.j.w[a.k]||0)*10/3);
+  const you=ABIL.map(a=>s.ab[a.k]);
+  g+=`<polygon points="${poly(req)}" fill="var(--warm)" fill-opacity=".12" stroke="var(--warm)" stroke-width="2" stroke-dasharray="5 4"/>`;
+  g+=`<polygon points="${poly(you)}" fill="var(--accent)" fill-opacity=".22" stroke="var(--accent)" stroke-width="2.5"/>`;
+  you.forEach((v,i)=>{const [x,y]=pt(i,v);g+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" fill="var(--accent)"/>`});
+  return `<svg class="radar" viewBox="0 0 340 300" role="img" aria-label="你的能力與${esc(r.j.name)}需求的雷達圖">${g}</svg>
+  <div class="legend"><span><i></i>你的能力</span><span><i class="w"></i>這個工作的需求</span></div>`;
+}
+
+function render(){
+  const res=compute();
+  const top=res[0];
+  $('#barTop').textContent=top.j.name;
+  $('#barSc').textContent=Math.round(top.score);
+  // persona
+  const ps=PERSONAS.map(p=>({p,v:p.f()})).sort((a,b)=>b.v-a.v);
+  $('#persona').innerHTML=`<span class="eyebrow">你的工作個性</span><b>${ps[0].p.n}</b><p>${ps[0].p.d}</p><p class="note">次要傾向：${ps[1].p.n}。${ps[1].p.d}</p>`;
+  // selected
+  const selId=s.sel&&JOBS.some(j=>j.id===s.sel)?s.sel:top.j.id;
+  const r=res.find(x=>x.j.id===selId);
+  const rankNo=res.indexOf(r)+1;
+  $('#detailBox').innerHTML=`
+   <div class="l">
+     <div class="eyebrow">第 ${rankNo} 名${r===top?'・最適合':''}</div>
+     <h2>${esc(r.j.name)}${r.j.inferred?' <span class="tag">部分內容依常見做法補充</span>':''}</h2>
+     <div class="big">${Math.round(r.score)}<small> / 100</small></div>
+     <div class="split">
+       <div><span>能力吻合</span><b>${Math.round(r.ability)}</b></div>
+       <div><span>個性吻合</span><b>${Math.round(r.pers)}</b></div>
+       <div><span>加分項</span><b>${r.bonus>=0?'+':''}${r.bonus.toFixed(1)}</b></div>
+     </div>
+     <dl class="kv" style="margin:0">
+       <div><span class="k">做什麼</span><dd style="margin:0">${esc(r.j.what)}</dd></div>
+       <div><span class="k">比喻</span><dd style="margin:0">${esc(r.j.meta)}</dd></div>
+       <div><span class="k">薪水</span><dd style="margin:0">${esc(r.j.pay)}</dd></div>
+       <div><span class="k">影片評分</span><dd style="margin:0"><span class="num">${r.j.market}</span> / 10</dd></div>
+     </dl>
+     <p>${esc(r.j.fit)}</p>
+     <div>${r.strengths.length?r.strengths.map(x=>`<span class="tag g">優勢 ${x}</span>`).join(' '):''} ${r.gaps.map(x=>`<span class="tag">待補強 ${x}</span>`).join(' ')}</div>
+   </div>
+   <div style="min-width:0">${radarSvg(r)}</div>`;
+  // ranking
+  $('#rank').innerHTML=res.map((x,i)=>`<button type="button" class="row" data-sel="${x.j.id}" aria-current="${x.j.id===selId}">
+     <span class="n">${i+1}</span><span class="nm">${esc(x.j.name)}</span>
+     <span class="track"><span class="fill" style="display:block;width:${x.score.toFixed(0)}%"></span></span>
+     <span class="v">${Math.round(x.score)}</span></button>`).join('');
+  // cards (keep flipped state)
+  const flipped=new Set([...document.querySelectorAll('.card[aria-pressed="true"]')].map(c=>c.dataset.id));
+  $('#cards').innerHTML=res.map((x,i)=>`<div class="card" role="button" tabindex="0" data-id="${x.j.id}" aria-pressed="${flipped.has(String(x.j.id))}" aria-label="${esc(x.j.name)}，翻面查看">
+    <div class="inner">
+      <div class="face"><div class="rk"><span>第 ${i+1} 名</span><span>影片 ${x.j.market}</span></div>
+        <h3>${esc(x.j.name)}</h3><div class="score">${Math.round(x.score)}</div>
+        <p style="font-size:14px">${esc(x.j.meta)}</p><span class="hint">點一下翻面</span></div>
+      <div class="face back"><h3>${esc(x.j.name)}</h3>
+        <p><b>做什麼</b>　${esc(x.j.what)}</p>
+        <p><b>薪水</b>　${esc(x.j.pay)}</p>
+        <p><b>怎麼開始</b>　${esc(x.j.start)}</p>
+        <p><b>搜尋關鍵字</b>　${esc(x.j.kw)}</p></div>
+    </div></div>`).join('');
+  // plan
+  const j=r.j;
+  $('#planTitle').textContent=`30 天行動計畫：${j.name}`;
+  $('#planSub').textContent=`先從「${j.start}」開始。`;
+  $('#plan').innerHTML=[
+    ['第 1 週','定位與作品',`選定一種客戶，依「${j.start}」做出 2 到 3 件作品，放進一頁式作品集。`],
+    ['第 2 週','建立檔案',`在 1 到 2 個接案網站建立檔案，用關鍵字「${j.kw.split(',')[0]}」找職缺並收藏 20 筆。`],
+    ['第 3 週','主動投遞','每天投 2 到 3 份客製化提案，說明你能解決什麼問題與交付時間。'],
+    ['第 4 週','收費與評價','接下第一筆小案，準時交付後請客戶留評價，再依回饋調整報價。']
+  ].map(p=>`<div><span class="eyebrow">${p[0]}</span><b>${p[1]}</b><p>${esc(p[2])}</p></div>`).join('');
+  save();
+}
+
+// events
+document.addEventListener('input',e=>{
+  const t=e.target; if(t.type!=='range')return;
+  const g=t.dataset.g,k=t.dataset.k; s[g][k]=+t.value;
+  const o=document.getElementById('o-'+t.id); if(o)o.textContent=t.value;
+  render();
+});
+document.addEventListener('click',e=>{
+  const chip=e.target.closest('.chip');
+  if(chip){const g=chip.dataset.g,k=chip.dataset.k,a=s[g];const i=a.indexOf(k);
+    if(i>=0)a.splice(i,1);else a.push(k);
+    chip.setAttribute('aria-pressed',i<0);render();return}
+  const row=e.target.closest('[data-sel]');
+  if(row){s.sel=+row.dataset.sel;render();$('#detail').scrollIntoView({behavior:'smooth',block:'start'});return}
+  const card=e.target.closest('.card');
+  if(card){const on=card.getAttribute('aria-pressed')==='true';card.setAttribute('aria-pressed',!on);s.sel=+card.dataset.id;
+    // update detail without rebuilding the cards
+    const res=compute();const saved=[...document.querySelectorAll('.card')].map(c=>[c.dataset.id,c.getAttribute('aria-pressed')]);
+    render();saved.forEach(([id,v])=>{const c=document.querySelector(`.card[data-id="${id}"]`);if(c)c.setAttribute('aria-pressed',v)});}
+});
+document.addEventListener('keydown',e=>{
+  if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('card')){e.preventDefault();e.target.click()}
+});
+$('#reset').addEventListener('click',()=>{s=JSON.parse(JSON.stringify(DEF));s.sel=null;buildControls();render()});
+$('#copy').addEventListener('click',()=>{
+  const res=compute().slice(0,3);
+  const txt='我的 AI 副業配對結果\n'+res.map((x,i)=>`${i+1}. ${x.j.name}　${Math.round(x.score)} 分`).join('\n')+
+   '\n能力：'+ABIL.map(a=>`${a.n}${s.ab[a.k]}`).join('、');
+  const msg=$('#copyMsg');
+  const fallback=()=>{msg.textContent='無法自動複製，請手動選取：'+txt.replace(/\n/g,' ／ ')};
+  try{navigator.clipboard.writeText(txt).then(()=>{msg.textContent='已複製'},fallback)}catch(err){fallback()}
+});
+buildControls();render();
+</script>
