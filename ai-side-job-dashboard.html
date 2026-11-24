@@ -1,0 +1,458 @@
+<title>副業連結儀表板</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* Concept: "connect" = nodes and links. You sit at the hub; every job is a node whose link thickness, glow and flow speed show how well it fits. Dark-first signal palette. */
+:root{
+  --bg:#07111A; --panel:#0E1B27; --panel2:#142839; --ink:#E8F1F7; --muted:#8CA3B5; --line:#223A4E;
+  --accent:#2BD4C0; --accent2:#4AA3FF; --warm:#FFB347; --accent-ink:#04211E;
+  --dot:rgba(120,170,200,.14);
+  --font-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --font-num:"Space Grotesk","Noto Sans TC",system-ui,sans-serif;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#EDF3F7; --panel:#FFFFFF; --panel2:#E3ECF2; --ink:#0F2230; --muted:#4F6576; --line:#CBD9E4;
+    --accent:#08877C; --accent2:#1A66CC; --warm:#A45C00; --accent-ink:#FFFFFF; --dot:rgba(30,90,130,.12); color-scheme:light;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#EDF3F7; --panel:#FFFFFF; --panel2:#E3ECF2; --ink:#0F2230; --muted:#4F6576; --line:#CBD9E4;
+  --accent:#08877C; --accent2:#1A66CC; --warm:#A45C00; --accent-ink:#FFFFFF; --dot:rgba(30,90,130,.12); color-scheme:light;
+}
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink);font:15px/1.6 var(--font-body);
+  background:var(--bg) radial-gradient(var(--dot) 1px,transparent 1.5px) 0 0/26px 26px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 40px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:16px}
+h1,h2,h3,p{margin:0}
+.num{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-top:18px}
+.top .brand{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.top h1{font-size:22px;font-weight:900;letter-spacing:.02em}
+.chipP{font-size:13px;color:var(--accent);border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:4px 12px;display:inline-flex;gap:6px;align-items:center}
+.chipP i{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 0 var(--accent);animation:ping 2s infinite}
+@keyframes ping{70%{box-shadow:0 0 0 8px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.btn{font:inherit;font-size:14px;font-weight:500;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:10px;padding:8px 14px}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;min-width:0;position:relative}
+.card h3{font-size:13px;letter-spacing:.1em;color:var(--muted);font-weight:500;margin-bottom:8px}
+
+.hero{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px}
+@media (max-width:860px){.hero{grid-template-columns:minmax(0,1fr)}}
+svg{display:block;max-width:100%;height:auto}
+#net{width:100%;max-height:560px;margin:0 auto}
+.link{stroke:var(--accent);stroke-linecap:round;stroke-dasharray:4 12;animation:flow 2s linear infinite;transition:stroke-width .5s,opacity .5s}
+@keyframes flow{to{stroke-dashoffset:-32}}
+.node{cursor:pointer}
+.node .dot{fill:var(--panel2);stroke:var(--accent2);stroke-width:2;transition:r .5s,stroke .3s,fill .3s}
+.node.top .dot{stroke:var(--accent);fill:var(--accent)}
+.node.sel .dot{stroke:var(--warm);stroke-width:4}
+.node .halo{fill:var(--accent);opacity:0;transform-box:fill-box;transform-origin:center}
+.node.top .halo{opacity:.25;animation:halo 2.2s ease-in-out infinite}
+@keyframes halo{50%{transform:scale(1.5);opacity:.05}}
+.node text{font-family:var(--font-num);font-weight:700;font-size:12px;fill:var(--ink);text-anchor:middle;pointer-events:none}
+.node.top text.sc{fill:var(--accent-ink)}
+.node text.nm{font-family:var(--font-body);font-weight:500;font-size:13px;fill:var(--muted)}
+.node.sel text.nm,.node.top text.nm{fill:var(--ink)}
+.hub{fill:var(--panel2);stroke:var(--accent);stroke-width:2}
+.pulse{fill:none;stroke:var(--accent);stroke-width:1.5;transform-box:fill-box;transform-origin:center;animation:pulse 3s ease-out infinite}
+.pulse.b{animation-delay:1.5s}
+@keyframes pulse{from{transform:scale(1);opacity:.7}to{transform:scale(3);opacity:0}}
+
+.focus{display:grid;gap:14px;align-content:start}
+.gwrap{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:center}
+@media (max-width:420px){.gwrap{grid-template-columns:minmax(0,1fr);justify-items:center;text-align:center}}
+.gauge{position:relative;width:170px}
+.gauge .in{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.gauge b{font-family:var(--font-num);font-size:46px;line-height:1;font-weight:700}
+.gauge small{color:var(--muted);font-size:12px}
+.prog{fill:none;stroke-linecap:round;transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset .9s cubic-bezier(.2,.8,.2,1)}
+.trk{fill:none;stroke:var(--line)}
+.rk{font-size:12px;color:var(--warm);font-weight:700;letter-spacing:.08em}
+.jn{font-size:22px;font-weight:900;line-height:1.25;text-wrap:balance}
+.meta{color:var(--muted);font-size:14px}
+.minis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mini{display:grid;justify-items:center;gap:2px;background:var(--panel2);border-radius:12px;padding:10px 4px;position:relative}
+.mini .r{position:relative;width:64px}
+.mini .r b{position:absolute;inset:0;display:grid;place-content:center;font-family:var(--font-num);font-size:16px}
+.mini span{font-size:12px;color:var(--muted)}
+.facts{display:grid;gap:8px}
+.fact{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;font-size:14px}
+.fact i{width:8px;height:8px;border-radius:50%;margin-top:8px;background:var(--accent2)}
+.fact.w i{background:var(--warm)}
+.fact em{font-style:normal;color:var(--muted);font-size:12px;display:block;line-height:1.3}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:12px;padding:2px 10px;border-radius:999px;border:1px solid var(--line)}
+.tag.g{color:var(--accent);border-color:var(--accent)}
+.tag.w{color:var(--warm);border-color:var(--warm)}
+
+.row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:980px){.row3{grid-template-columns:minmax(0,1fr)}}
+.legend{display:flex;gap:14px;justify-content:center;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.legend i{display:inline-block;width:16px;border-top:3px solid var(--accent);vertical-align:middle;margin-right:6px}
+.legend i.w{border-top:2px dashed var(--warm)}
+
+.rank{display:grid;gap:6px}
+.row{display:grid;grid-template-columns:18px minmax(0,1fr) 34px;gap:4px 8px;align-items:center;width:100%;text-align:left;font:inherit;color:inherit;background:transparent;border:1px solid transparent;border-radius:10px;padding:6px 8px;cursor:pointer}
+.row:hover{background:var(--panel2)}
+.row[aria-current="true"]{border-color:var(--warm)}
+.row .n{font-family:var(--font-num);color:var(--muted);font-weight:700;font-size:13px}
+.row .nm{font-size:13px;line-height:1.3}
+.row .v{font-family:var(--font-num);font-weight:700;text-align:right}
+.track{grid-column:2 / 4;height:8px;background:var(--panel2);border-radius:999px;overflow:hidden}
+.fill{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent2),var(--accent));transform-origin:left;transition:width .6s}
+.first .fill{animation:grow .9s cubic-bezier(.2,.8,.2,1) both}
+@keyframes grow{from{transform:scaleX(0)}}
+
+.tl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;position:relative;padding-top:6px}
+.tl::before,.tl::after{content:"";position:absolute;left:12.5%;right:12.5%;top:16px;height:3px;border-radius:3px}
+.tl::before{background:var(--line)}
+.tl::after{background:linear-gradient(90deg,var(--accent2),var(--accent));transform-origin:left;animation:grow 1.4s .2s cubic-bezier(.2,.8,.2,1) both}
+.st{display:grid;justify-items:center;text-align:center;gap:4px;position:relative;z-index:1;animation:rise .6s both}
+.st:nth-child(2){animation-delay:.2s}.st:nth-child(3){animation-delay:.5s}.st:nth-child(4){animation-delay:.8s}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}}
+.st .d{width:22px;height:22px;border-radius:50%;background:var(--panel);border:3px solid var(--accent);display:grid;place-items:center}
+.st b{font-size:14px}
+.st p{font-size:13px;color:var(--muted);max-width:24ch}
+@media (max-width:640px){
+  .tl{grid-template-columns:minmax(0,1fr);justify-items:start}
+  .tl::before,.tl::after{left:10px;right:auto;top:20px;bottom:20px;width:3px;height:auto}
+  .tl::after{transform-origin:top}
+  .st{grid-template-columns:auto minmax(0,1fr);justify-items:start;text-align:left;gap:2px 12px}
+  .st .d{grid-row:1 / 3}
+  .st p{max-width:none}
+}
+
+.plat{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.plat a{font-size:13px;color:var(--ink);text-decoration:none;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:5px 14px}
+.plat a:hover{border-color:var(--accent);color:var(--accent)}
+.note{font-size:12px;color:var(--muted)}
+
+/* drawer */
+.drawer{position:fixed;z-index:40;top:env(safe-area-inset-top,0px);right:0;bottom:0;width:min(400px,100%);background:var(--panel);border-left:1px solid var(--line);
+  padding:16px max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) 16px;overflow:auto;display:grid;gap:16px;align-content:start;
+  transform:translateX(100%);visibility:hidden;transition:transform .35s,visibility .35s;box-shadow:-12px 0 32px rgba(0,0,0,.25)}
+.drawer.open{transform:none;visibility:visible}
+.drawer header{display:flex;align-items:center;gap:10px}
+.drawer header div{flex:1;min-width:0}
+.drawer header b{font-size:16px}
+.drawer h2{font-size:13px;letter-spacing:.1em;color:var(--muted);font-weight:500}
+.sl{display:grid;gap:0}
+.sl label{display:flex;justify-content:space-between;font-size:14px}
+.sl output{font-family:var(--font-num);font-weight:700;color:var(--accent)}
+.ends{display:flex;justify-content:space-between;gap:8px;color:var(--muted);font-size:11px}
+input[type=range]{width:100%;accent-color:var(--accent);margin:3px 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:13px;cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--ink);border-radius:999px;padding:4px 12px}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+.grp{display:grid;gap:10px}
+
+@media (prefers-reduced-motion:reduce){
+  .link,.pulse,.node.top .halo,.chipP i,.fill,.tl::after,.st,.prog,.drawer{animation:none!important;transition:none!important}
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
+        <g stroke="var(--accent)" stroke-width="2" fill="none"><line x1="17" y1="17" x2="6" y2="8"/><line x1="17" y1="17" x2="28" y2="9"/><line x1="17" y1="17" x2="26" y2="28"/></g>
+        <circle cx="17" cy="17" r="5" fill="var(--accent)"/><circle cx="6" cy="8" r="3" fill="var(--accent2)"/><circle cx="28" cy="9" r="3" fill="var(--accent2)"/><circle cx="26" cy="28" r="3" fill="var(--accent2)"/>
+      </svg>
+      <h1>副業連結儀表板</h1>
+    </div>
+    <span class="chipP" id="persona"><i></i><span></span></span>
+    <button class="btn pri" id="openD" type="button">調整條件</button>
+  </header>
+
+  <section class="hero">
+    <div class="card">
+      <h3>你與 9 種工作的連結強度</h3>
+      <svg id="net" viewBox="-40 0 600 520" role="img" aria-label="你與九種副業工作的配對連結圖，連線越粗代表越適合"></svg>
+    </div>
+    <div class="card focus">
+      <h3>目前選取</h3>
+      <div class="gwrap">
+        <div class="gauge">
+          <svg viewBox="0 0 180 180" aria-hidden="true">
+            <defs><linearGradient id="gg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--accent2)"/><stop offset="1" style="stop-color:var(--accent)"/></linearGradient></defs>
+            <circle class="trk" cx="90" cy="90" r="74" stroke-width="12"/>
+            <circle class="prog" id="gProg" cx="90" cy="90" r="74" stroke-width="12" stroke="url(#gg)" stroke-dasharray="464.96" stroke-dashoffset="464.96"/>
+          </svg>
+          <div class="in"><b id="gNum">0</b><small>配對分 / 100</small></div>
+        </div>
+        <div style="min-width:0;display:grid;gap:4px">
+          <span class="rk" id="fRank"></span>
+          <div class="jn" id="fName"></div>
+          <p class="meta" id="fMeta"></p>
+        </div>
+      </div>
+      <div class="minis">
+        <div class="mini"><div class="r"><svg viewBox="0 0 64 64"><circle class="trk" cx="32" cy="32" r="26" stroke-width="6"/><circle class="prog mp" id="m1" cx="32" cy="32" r="26" stroke-width="6" stroke="var(--accent)" stroke-dasharray="163.36" stroke-dashoffset="163.36"/></svg><b id="v1">0</b></div><span>能力</span></div>
+        <div class="mini"><div class="r"><svg viewBox="0 0 64 64"><circle class="trk" cx="32" cy="32" r="26" stroke-width="6"/><circle class="prog mp" id="m2" cx="32" cy="32" r="26" stroke-width="6" stroke="var(--accent2)" stroke-dasharray="163.36" stroke-dashoffset="163.36"/></svg><b id="v2">0</b></div><span>個性</span></div>
+        <div class="mini"><div class="r"><svg viewBox="0 0 64 64"><circle class="trk" cx="32" cy="32" r="26" stroke-width="6"/><circle class="prog mp" id="m3" cx="32" cy="32" r="26" stroke-width="6" stroke="var(--warm)" stroke-dasharray="163.36" stroke-dashoffset="163.36"/></svg><b id="v3">0</b></div><span>加分</span></div>
+      </div>
+      <div class="facts" id="facts"></div>
+      <div class="tags" id="tags"></div>
+    </div>
+  </section>
+
+  <section class="row3">
+    <div class="card"><h3>能力對照</h3><div id="radar"></div></div>
+    <div class="card"><h3>配對排名</h3><div class="rank first" id="rank"></div></div>
+    <div class="card"><h3>市場需求 × 你的吻合度</h3><div id="scatter"></div></div>
+  </section>
+
+  <section class="card">
+    <h3 id="tlTitle">30 天啟動路線</h3>
+    <div class="tl" id="tl"></div>
+  </section>
+
+  <section class="card">
+    <h3>接案網站</h3>
+    <div class="plat">
+      <a href="https://www.upwork.com" target="_blank" rel="noopener">Upwork</a>
+      <a href="https://www.fiverr.com" target="_blank" rel="noopener">Fiverr</a>
+      <a href="https://www.freelancer.com" target="_blank" rel="noopener">Freelancer</a>
+      <a href="https://case.104.com.tw" target="_blank" rel="noopener">104 外包網</a>
+      <a href="https://contra.com" target="_blank" rel="noopener">Contra</a>
+    </div>
+  </section>
+  <p class="note">分數依你的自評與影片截圖的職缺資料計算，僅供參考。金額取自影片，以 $ 標示。中文 AI 訓練師的詳細頁不在截圖內，該項部分欄位為補充，請對照影片修正。兼職前請先確認公司兼職與保密規定。</p>
+</div>
+
+<aside class="drawer" id="drawer" aria-label="調整條件" aria-hidden="true">
+  <header>
+    <div><span class="note">目前最適合</span><br><b id="dTop"></b></div>
+    <button class="btn" id="closeD" type="button">完成</button>
+  </header>
+  <div class="grp"><h2>能力自評（0 到 10）</h2><div id="abil" class="grp"></div></div>
+  <div class="grp"><h2>個性與生活條件</h2><div id="trait" class="grp"></div></div>
+  <div class="grp"><h2>常用工具</h2><div class="chips" id="tools"></div></div>
+  <div class="grp"><h2>過往經驗</h2><div class="chips" id="exps"></div></div>
+  <button class="btn" id="reset" type="button">還原預設值</button>
+</aside>
+
+<script>
+const ABIL=[
+ {k:'domain',n:'產業專業'},{k:'enW',n:'英文文件'},{k:'zhW',n:'中文文件'},{k:'comm',n:'對外溝通'},
+ {k:'proc',n:'流程整理'},{k:'data',n:'數據分析'},{k:'mkt',n:'行銷廣告'},{k:'ai',n:'AI 工具'}
+];
+const TRAITS=[
+ {k:'social',n:'人際互動',lo:'偏好獨自作業',hi:'喜歡與人互動'},
+ {k:'stable',n:'收入穩定度',lo:'願意衝高、承擔波動',hi:'偏好穩定收入'},
+ {k:'repeat',n:'重複細節',lo:'討厭重複',hi:'耐得住細節'},
+ {k:'free',n:'先試做再收費',lo:'不想免費試做',hi:'願意先做作品'},
+ {k:'real',n:'即時回覆',lo:'上班時間難回覆',hi:'可隨時回覆'}
+];
+const TOOLS=[
+ {k:'ai',n:'ChatGPT / Claude 等 AI',j:[1,2,3,5,6,7,9]},{k:'xls',n:'Excel / 試算表',j:[3,4,8,9]},
+ {k:'ppt',n:'Word / PowerPoint',j:[5,6,7]},{k:'design',n:'Canva / Figma',j:[3,5,9]},
+ {k:'notion',n:'Notion 文件工具',j:[2,5,6]},{k:'ads',n:'廣告後台',j:[9]},
+ {k:'crm',n:'CRM / 自動化',j:[2,4]},{k:'shop',n:'電商後台',j:[3,8]},{k:'trans',n:'翻譯校對',j:[1,7,8]}
+];
+const EXPS=[
+ {k:'rfq',n:'寫過 RFQ / 提案',j:[6,7]},{k:'vendor',n:'管理 design house / 供應商',j:[2,8]},
+ {k:'expo',n:'展覽與活動協調',j:[4,9]},{k:'visit',n:'客戶拜訪與訪談',j:[2,4,8]},
+ {k:'bench',n:'競品分析',j:[1,3,9]},{k:'train',n:'內部培訓、教材',j:[1,5,6]},
+ {k:'report',n:'市調報告整理',j:[1,6,7]},{k:'csat',n:'售後與滿意度',j:[2,4]},{k:'chip',n:'國外芯片廠交流',j:[1,7,8]}
+];
+const JOBS=[
+ {id:1,s:'AI 訓練師',name:'中文 AI 訓練師',market:8.5,w:{zhW:3,ai:3,domain:2,proc:1,data:1},t:[2,7,7,4,2],meta:'AI 的中文品質把關人',pay:'截圖未列出，請對照影片補上',start:'挑 3 則中文 AI 回答，做評分與改寫當樣本',inferred:true,kw:'AI trainer'},
+ {id:2,s:'AI 線上助理',name:'會用 AI 的線上助理',market:8,w:{comm:2,ai:3,proc:2,zhW:1,enW:1},t:[8,5,5,6,7],meta:'不用進辦公室的秘書',pay:'時薪 $10–50+',start:'選一種老闆，提出 3 件你能幫他做的事',kw:'virtual assistant'},
+ {id:3,s:'商品目錄',name:'電商商品目錄專員',market:7.5,w:{zhW:2,data:2,proc:2,ai:2,mkt:1},t:[1,9,9,3,1],meta:'1 萬個商品的圖書館員',pay:'年薪 $45K–89K',start:'重寫 20 個商品當作品',kw:'product listing'},
+ {id:4,s:'快速回覆',name:'快速回覆名單專員',market:8,w:{comm:3,proc:2,ai:1,zhW:1},t:[9,4,4,2,10],meta:'把老闆的行事曆排滿',pay:'時薪 $8–45 + 佣金',start:'按約到的客人收費',kw:'appointment setter'},
+ {id:5,s:'SOP',name:'SOP 撰寫員',market:8.5,w:{proc:3,zhW:3,domain:2,ai:2},t:[3,7,6,7,2],meta:'幫公司寫食譜書',pay:'中位數 $91,670 / 年',start:'免費寫 3 份 SOP',kw:'SOP writer'},
+ {id:6,s:'補助申請',name:'補助申請撰寫員',market:8,w:{zhW:3,proc:2,domain:2,data:1,ai:2},t:[3,6,5,6,2],meta:'幫人找到免費的錢',pay:'年薪約 $66K',start:'幫小企業申請一個補助',kw:'grant writer'},
+ {id:7,s:'標案',name:'標案撰寫員',market:8.5,w:{domain:3,zhW:2,enW:2,proc:2,ai:2,comm:1},t:[4,5,5,7,2],meta:'幫公司贏生意的文書',pay:'平均約 $81K / 年',start:'幫正在投標的小公司',kw:'proposal writer'},
+ {id:8,s:'採購代理',name:'採購代理',market:9,w:{comm:3,enW:2,domain:2,proc:2,data:1,ai:1},t:[8,4,4,6,5],meta:'企業的私人購物顧問',pay:'抽佣 3–10% + 月費；$2,000 單約 8–10%，超過 $100,000 單約 3–4%，長期月費 $1,500–$5,000',start:'幫小型網路賣家找供應商',kw:'sourcing agent'},
+ {id:9,s:'廣告投手',name:'廣告投手',market:9.5,w:{mkt:3,data:3,ai:2,zhW:1,proc:1},t:[4,3,4,8,4],meta:'決定企業的錢花在哪的人',pay:'平均約 $81.9K / 年',start:'免費試做，做出成果，再收費',kw:'Google Ads specialist'}
+];
+const DEF={ab:{domain:8,enW:7,zhW:7,comm:8,proc:7,data:6,mkt:6,ai:5},tr:{social:7,stable:6,repeat:4,free:6,real:3},tools:['ai','xls','ppt','trans'],exp:['rfq','vendor','expo','visit','bench','train','report','csat','chip']};
+const PERSONAS=[
+ {n:'對外連結型',f:()=>s.tr.social*.7+s.tr.real*.3},
+ {n:'結構整理型',f:()=>s.tr.repeat*.6+(10-s.tr.social)*.4},
+ {n:'試作衝刺型',f:()=>(10-s.tr.stable)*.5+s.tr.free*.5},
+ {n:'穩健專家型',f:()=>s.tr.stable*.7+(10-s.tr.free)*.3}
+];
+const KEY='ai-side-dash-v1';
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let s=JSON.parse(JSON.stringify(DEF)); s.sel=null;
+try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&p.ab&&p.tr)s={...s,...p,sel:null}}}catch(e){}
+const $=q=>document.querySelector(q);
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const aName=k=>ABIL.find(a=>a.k===k).n;
+
+function compute(){
+  return JOBS.map(j=>{
+    let num=0,den=0;const con=[];
+    for(const k in j.w){num+=j.w[k]*s.ab[k];den+=j.w[k]*10;con.push({k,w:j.w[k],u:s.ab[k]})}
+    const ability=num/den*100;
+    const pers=100-(j.t.reduce((a,t,i)=>a+Math.abs(t-s.tr[TRAITS[i].k]),0)/5)*10;
+    const tb=Math.min(6,TOOLS.filter(t=>s.tools.includes(t.k)&&t.j.includes(j.id)).length*1.5);
+    const eb=Math.min(8,EXPS.filter(e=>s.exp.includes(e.k)&&e.j.includes(j.id)).length*2);
+    const bonus=tb+eb+(j.market-7.5)*2;
+    const score=Math.max(0,Math.min(100,.55*ability+.25*pers+bonus));
+    return {j,score,ability,pers,bonus,
+      strengths:con.filter(c=>c.u>=6).sort((a,b)=>b.w*b.u-a.w*a.u).slice(0,3).map(c=>aName(c.k)),
+      gaps:con.filter(c=>c.w>=2&&c.u<6).map(c=>aName(c.k))};
+  }).sort((a,b)=>b.score-a.score);
+}
+
+/* ---------- network (built once, updated for smooth transitions) ---------- */
+const CX=260,CY=260,RR=165,NS='http://www.w3.org/2000/svg';
+const mk=(tag,attrs={},parent)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e};
+const net=$('#net'),nodes={};
+function buildNet(){
+  const links=mk('g',{},net),ring=mk('g',{},net),hubG=mk('g',{},net);
+  mk('circle',{class:'pulse',cx:CX,cy:CY,r:34},hubG);mk('circle',{class:'pulse b',cx:CX,cy:CY,r:34},hubG);
+  JOBS.forEach((j,i)=>{
+    const a=-Math.PI/2+i*2*Math.PI/JOBS.length,x=CX+Math.cos(a)*RR,y=CY+Math.sin(a)*RR;
+    const line=mk('line',{class:'link',x1:CX,y1:CY,x2:x,y2:y},links);
+    const g=mk('g',{class:'node','data-sel':j.id,tabindex:0,role:'button','aria-label':j.name},ring);
+    const halo=mk('circle',{class:'halo',cx:x,cy:y,r:30},g);
+    const dot=mk('circle',{class:'dot',cx:x,cy:y,r:22},g);
+    const sc=mk('text',{class:'sc',x:x,y:y+4},g);
+    const lx=CX+Math.cos(a)*(RR+48),ly=CY+Math.sin(a)*(RR+48);
+    const nm=mk('text',{class:'nm',x:lx,y:ly+4},g);nm.textContent=j.s;
+    nm.setAttribute('text-anchor',Math.abs(Math.cos(a))<.2?'middle':Math.cos(a)>0?'start':'end');
+    nm.style.textAnchor=nm.getAttribute('text-anchor');
+    nodes[j.id]={g,line,dot,halo,sc};
+  });
+  mk('circle',{class:'hub',cx:CX,cy:CY,r:34},hubG);
+  const t=mk('text',{x:CX,y:CY+6,'text-anchor':'middle','font-size':18,'font-weight':900,fill:'var(--ink)'},hubG);t.textContent='你';
+  hubG.style.pointerEvents='none';
+}
+function updNet(res,selId){
+  res.forEach((r,i)=>{
+    const n=nodes[r.j.id],v=r.score/100,rad=15+v*v*22;
+    n.line.style.strokeWidth=(1+v*v*6).toFixed(1);
+    n.line.style.opacity=(.15+v*.8).toFixed(2);
+    n.line.style.animationDuration=(3.4-v*2.4).toFixed(2)+'s';
+    n.dot.setAttribute('r',rad.toFixed(1));n.dot.style.r=rad.toFixed(1)+'px';
+    n.halo.setAttribute('r',(rad+8).toFixed(1));
+    n.sc.textContent=Math.round(r.score);
+    n.g.classList.toggle('top',i===0);n.g.classList.toggle('sel',r.j.id===selId);
+  });
+}
+
+/* ---------- helpers ---------- */
+function tween(el,to,dur=700){
+  cancelAnimationFrame(el._raf);
+  const from=Number(el.textContent)||0;
+  if(reduce||from===to){el.textContent=Math.round(to);return}
+  const t0=performance.now();
+  (function f(t){const k=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-k,3);el.textContent=Math.round(from+(to-from)*e);if(k<1)el._raf=requestAnimationFrame(f)})(t0);
+}
+const setRing=(id,r,pct)=>{const c=2*Math.PI*r;$(id).style.strokeDashoffset=(c*(1-Math.max(0,Math.min(1,pct)))).toFixed(1)};
+
+function radarSvg(r){
+  const cx=170,cy=150,R=96,n=ABIL.length;
+  const pt=(i,v)=>{const a=-Math.PI/2+i*2*Math.PI/n;return [cx+Math.cos(a)*R*v/10,cy+Math.sin(a)*R*v/10]};
+  const poly=v=>v.map((x,i)=>pt(i,x).map(q=>q.toFixed(1)).join(',')).join(' ');
+  let g='';
+  [2.5,5,7.5,10].forEach(v=>g+=`<polygon points="${poly(ABIL.map(()=>v))}" fill="none" stroke="var(--line)"/>`);
+  ABIL.forEach((a,i)=>{const [x,y]=pt(i,10);g+=`<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--line)"/>`;
+    const [lx,ly]=pt(i,12.4);g+=`<text x="${lx.toFixed(1)}" y="${(ly+4).toFixed(1)}" text-anchor="${lx<cx-8?'end':lx>cx+8?'start':'middle'}" font-size="12" fill="var(--muted)">${a.n}</text>`});
+  const req=ABIL.map(a=>(r.j.w[a.k]||0)*10/3),you=ABIL.map(a=>s.ab[a.k]);
+  g+=`<polygon points="${poly(req)}" fill="var(--warm)" fill-opacity=".12" stroke="var(--warm)" stroke-width="2" stroke-dasharray="5 4"/>`;
+  g+=`<polygon points="${poly(you)}" fill="var(--accent)" fill-opacity=".25" stroke="var(--accent)" stroke-width="2.5" style="animation:rise .6s both"/>`;
+  you.forEach((v,i)=>{const [x,y]=pt(i,v);g+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" fill="var(--accent)"/>`});
+  return `<svg viewBox="0 0 340 300" style="width:100%;max-width:360px;margin:0 auto" role="img" aria-label="${esc(r.j.name)}能力對照雷達圖">${g}</svg>
+  <div class="legend"><span><i></i>你</span><span><i class="w"></i>工作需求</span></div>`;
+}
+
+function scatterSvg(res,selId){
+  const W=360,H=280,L=38,R=14,T=14,B=40;
+  const sc=res.map(r=>r.score),lo=Math.max(0,Math.floor((Math.min(...sc)-6)/10)*10),hi=Math.min(100,Math.ceil((Math.max(...sc)+6)/10)*10);
+  const xmin=7.2,xmax=9.8;
+  const X=m=>L+(m-xmin)/(xmax-xmin)*(W-L-R),Y=v=>T+(hi-v)/(hi-lo)*(H-T-B);
+  let g='';
+  for(let v=lo;v<=hi;v+=10)g+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end" font-size="11" fill="var(--muted)" class="num">${v}</text>`;
+  [8,8.5,9,9.5].forEach(m=>g+=`<text x="${X(m)}" y="${H-B+16}" text-anchor="middle" font-size="11" fill="var(--muted)" class="num">${m}</text>`);
+  const mx=JOBS.reduce((a,j)=>a+j.market,0)/JOBS.length,my=sc.reduce((a,b)=>a+b,0)/sc.length;
+  g+=`<line x1="${X(mx)}" x2="${X(mx)}" y1="${T}" y2="${H-B}" stroke="var(--muted)" stroke-dasharray="3 4" opacity=".6"/><line x1="${L}" x2="${W-R}" y1="${Y(my)}" y2="${Y(my)}" stroke="var(--muted)" stroke-dasharray="3 4" opacity=".6"/>`;
+  g+=`<text x="${W-R-2}" y="${T+12}" text-anchor="end" font-size="12" fill="var(--accent)" font-weight="700">高需求 × 高吻合</text>`;
+  g+=`<text x="${(L+W-R)/2}" y="${H-6}" text-anchor="middle" font-size="12" fill="var(--muted)">影片市場評分 →</text>`;
+  g+=`<text transform="translate(11 ${(T+H-B)/2}) rotate(-90)" text-anchor="middle" font-size="12" fill="var(--muted)">你的配對分 →</text>`;
+  res.forEach((r,i)=>{
+    const x=X(r.j.market),y=Y(r.score),sel=r.j.id===selId,top=i===0;
+    const fill=sel?'var(--warm)':top?'var(--accent)':'var(--panel2)',stroke=sel?'var(--warm)':top?'var(--accent)':'var(--accent2)';
+    g+=`<g data-sel="${r.j.id}" style="cursor:pointer"><title>${esc(r.j.name)} ${Math.round(r.score)}</title>
+      <circle cx="${x}" cy="${y}" r="12" fill="${fill}" stroke="${stroke}" stroke-width="2"/>
+      <text x="${x}" y="${y+4}" text-anchor="middle" font-size="12" font-weight="700" class="num" fill="${sel||top?'var(--accent-ink)':'var(--ink)'}">${i+1}</text></g>`;
+    if(sel){const right=x<W-90;g+=`<text x="${right?x+17:x-17}" y="${y+4}" text-anchor="${right?'start':'end'}" font-size="12" font-weight="700" fill="var(--warm)">${esc(r.j.s)}</text>`}
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%" role="img" aria-label="市場需求與你的吻合度散布圖">${g}</svg>`;
+}
+
+let first=true;
+function render(){
+  const res=compute(),top=res[0];
+  const selId=s.sel&&JOBS.some(j=>j.id===s.sel)?s.sel:top.j.id;
+  const r=res.find(x=>x.j.id===selId),rank=res.indexOf(r)+1;
+  updNet(res,selId);
+  // persona
+  const ps=PERSONAS.map(p=>({n:p.n,v:p.f()})).sort((a,b)=>b.v-a.v);
+  $('#persona span').textContent=ps[0].n;
+  $('#dTop').textContent=`${top.j.name}　${Math.round(top.score)}`;
+  // focus
+  $('#fRank').textContent=rank===1?'第 1 名・最適合':`第 ${rank} 名`;
+  $('#fName').textContent=r.j.name;$('#fMeta').textContent=r.j.meta;
+  tween($('#gNum'),r.score);setRing('#gProg',74,r.score/100);
+  tween($('#v1'),r.ability);setRing('#m1',26,r.ability/100);
+  tween($('#v2'),r.pers);setRing('#m2',26,r.pers/100);
+  $('#v3').textContent=(r.bonus>=0?'+':'')+r.bonus.toFixed(1);setRing('#m3',26,Math.max(0,r.bonus)/16);
+  $('#facts').innerHTML=`<div class="fact"><i></i><div><em>薪水</em>${esc(r.j.pay)}</div></div><div class="fact w"><i></i><div><em>怎麼開始</em>${esc(r.j.start)}</div></div>`+(r.j.inferred?'<p class="note">此項部分內容為補充，請對照影片。</p>':'');
+  $('#tags').innerHTML=r.strengths.map(x=>`<span class="tag g">優勢 ${x}</span>`).join('')+r.gaps.map(x=>`<span class="tag w">待補強 ${x}</span>`).join('');
+  // charts
+  $('#radar').innerHTML=radarSvg(r);
+  $('#scatter').innerHTML=scatterSvg(res,selId);
+  $('#rank').innerHTML=res.map((x,i)=>`<button type="button" class="row" data-sel="${x.j.id}" aria-current="${x.j.id===selId}"><span class="n">${i+1}</span><span class="nm">${esc(x.j.name)}</span><span class="v">${Math.round(x.score)}</span><span class="track"><span class="fill" style="width:${x.score.toFixed(0)}%"></span></span></button>`).join('');
+  if(first){first=false;$('#rank').classList.add('first');setTimeout(()=>$('#rank').classList.remove('first'),1200)}
+  else $('#rank').classList.remove('first');
+  // timeline
+  $('#tlTitle').textContent=`30 天啟動路線：${r.j.name}`;
+  $('#tl').innerHTML=[
+    ['第 1 週','做作品',r.j.start],
+    ['第 2 週','建檔案',`在接案網站建立檔案，搜尋「${r.j.kw}」`],
+    ['第 3 週','投提案','每天投 2 到 3 份客製化提案'],
+    ['第 4 週','收費與評價','接第一筆小案，請客戶留評價']
+  ].map(p=>`<div class="st"><span class="d"></span><b>${p[0]}・${p[1]}</b><p>${esc(p[2])}</p></div>`).join('');
+  try{localStorage.setItem(KEY,JSON.stringify({ab:s.ab,tr:s.tr,tools:s.tools,exp:s.exp}))}catch(e){}
+}
+
+function buildControls(){
+  $('#abil').innerHTML=ABIL.map(a=>`<div class="sl"><label for="ab-${a.k}">${a.n}<output id="o-ab-${a.k}" class="num">${s.ab[a.k]}</output></label><input type="range" id="ab-${a.k}" data-g="ab" data-k="${a.k}" min="0" max="10" value="${s.ab[a.k]}"></div>`).join('');
+  $('#trait').innerHTML=TRAITS.map(t=>`<div class="sl"><label for="tr-${t.k}">${t.n}<output id="o-tr-${t.k}" class="num">${s.tr[t.k]}</output></label><input type="range" id="tr-${t.k}" data-g="tr" data-k="${t.k}" min="0" max="10" value="${s.tr[t.k]}"><div class="ends"><span>${t.lo}</span><span>${t.hi}</span></div></div>`).join('');
+  $('#tools').innerHTML=TOOLS.map(t=>`<button type="button" class="chip" data-g="tools" data-k="${t.k}" aria-pressed="${s.tools.includes(t.k)}">${t.n}</button>`).join('');
+  $('#exps').innerHTML=EXPS.map(t=>`<button type="button" class="chip" data-g="exp" data-k="${t.k}" aria-pressed="${s.exp.includes(t.k)}">${t.n}</button>`).join('');
+}
+
+document.addEventListener('input',e=>{const t=e.target;if(t.type!=='range')return;s[t.dataset.g][t.dataset.k]=+t.value;const o=document.getElementById('o-'+t.id);if(o)o.textContent=t.value;render()});
+document.addEventListener('click',e=>{
+  const chip=e.target.closest('.chip');
+  if(chip){const a=s[chip.dataset.g],k=chip.dataset.k,i=a.indexOf(k);if(i>=0)a.splice(i,1);else a.push(k);chip.setAttribute('aria-pressed',i<0);render();return}
+  const sel=e.target.closest('[data-sel]');
+  if(sel){s.sel=+sel.dataset.sel;render()}
+});
+document.addEventListener('keydown',e=>{
+  if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('.node')){e.preventDefault();s.sel=+e.target.dataset.sel;render()}
+  if(e.key==='Escape')setDrawer(false);
+});
+function setDrawer(o){const d=$('#drawer');d.classList.toggle('open',o);d.setAttribute('aria-hidden',!o);if(o)$('#closeD').focus();else $('#openD').focus({preventScroll:true})}
+$('#openD').addEventListener('click',()=>setDrawer(true));
+$('#closeD').addEventListener('click',()=>setDrawer(false));
+$('#reset').addEventListener('click',()=>{s=JSON.parse(JSON.stringify(DEF));s.sel=null;buildControls();render()});
+buildNet();buildControls();render();
+</script>
